@@ -59,10 +59,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.suming.reparacion.ApplicationManager
+import com.suming.reparacion.LocalAppManager
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerReceiver
 import com.suming.reparacion.R
-import com.suming.reparacion.Receiver
+import com.suming.reparacion.AntiqueZip.Receiver
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -165,7 +165,7 @@ class VeryOLDNotiManager: AppCompatActivity(), ReceiverCallback {
         //按钮：搜索应用关闭
         val ButtonAppList = findViewById<CardView>(R.id.ButtonCard_toAppList)
         ButtonAppList.setOnClickListener {
-            startActivity(Intent(this, ApplicationManager::class.java))
+            startActivity(Intent(this, LocalAppManager::class.java))
         }
 
     }

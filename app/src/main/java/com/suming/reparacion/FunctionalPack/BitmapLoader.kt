@@ -5,6 +5,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class BitmapLoader {
@@ -80,6 +84,62 @@ class BitmapLoader {
 
     }
 
+    //
+    private val coroutine_load = CoroutineScope(Dispatchers.IO)
+    suspend fun loadLocalBitmapCore(mode: String, file: File): Pair<Boolean, Bitmap?> {
+        return withContext(Dispatchers.IO) {
+            when(mode){
+                //深色壁纸
+                "dark" -> {
+                    consoleLog("BitmapLoader: 开始加载深色壁纸")
+                    //直接取文件实例
+                    if (file.exists()) {
+                        var bitmap: Bitmap?
+                        try{
+                            bitmap = BitmapFactory.decodeFile(file.absolutePath)
+
+                            consoleLog("BitmapLoader: 加载深色壁纸成功")
+
+                            return@withContext Pair(true,bitmap)
+                        }catch (_: Exception){
+                            consoleLog("BitmapLoader: 加载深色壁纸失败")
+                            return@withContext Pair(false,null)
+                        }
+                    }else{
+                        consoleLog("BitmapLoader: 深色壁纸文件不存在。复盘：Dir:${file.parentFile},FileName:${file.name}")
+
+                        return@withContext Pair(false,null)
+                    }
+                }
+                //浅色壁纸
+                "light" -> {
+                    consoleLog("BitmapLoader: 开始加载浅色壁纸")
+                    //直接取文件实例
+                    if (file.exists()) {
+                        var bitmap: Bitmap?
+                        try{
+                            bitmap = BitmapFactory.decodeFile(file.absolutePath)
+
+                            consoleLog("BitmapLoader: 加载浅色壁纸成功")
+
+                            return@withContext Pair(true,bitmap)
+                        }catch (_: Exception){
+                            consoleLog("BitmapLoader: 加载浅色壁纸失败")
+                            return@withContext Pair(false,null)
+                        }
+                    }else{
+                        consoleLog("BitmapLoader: 浅色壁纸文件不存在。复盘：Dir:${file.parentFile},FileName:${file.name}")
+                        return@withContext Pair(false,null)
+                    }
+                }
+                //其他错误传参
+                else -> {
+                    consoleLog("BitmapLoader: 收到无效的参数,期望参数为\"dark\"或\"light\"")
+                    return@withContext Pair(false,null)
+                }
+            }
+        }
+    }
 
     //统一日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {

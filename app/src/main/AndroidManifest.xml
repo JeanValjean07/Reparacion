@@ -53,7 +53,7 @@
             android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             />
         <!-- 应用管理 -->
-        <activity android:name="com.suming.reparacion.ApplicationManager"
+        <activity android:name="com.suming.reparacion.LocalAppManager"
             android:label="应用管理"
             android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:exported="true"
@@ -69,6 +69,13 @@
             android:label="音量控制"
             android:exported="true"
             />
+        <!-- 小组件管理中心 -->
+        <activity android:name="com.suming.reparacion.WidgetManager"
+            android:label="小组件管理中心"
+            android:exported="true"
+            />
+
+
 
 
         <!-- 指南 -->
@@ -135,6 +142,17 @@
         <meta-data android:name="com.huawei.messaging.default_notification_icon"
             android:value="@drawable/ic_launcher_foreground"
             />
+
+        <!-- Widget - Desk Clock -->
+        <receiver android:name="com.suming.reparacion.ActivityComponents.WidgetManager.ClockWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
 
         <!-- 开放源代码许可(谷歌OSS) -->
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"

@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         //工具列表
         val toolsList = ToolList.toolsList
 
-        //托管给ComposableRoot
+        //ComposableRoot
         setContent {
             ComposeRoot(toolsList, mainViewModel)
         }
@@ -382,8 +382,8 @@ class MainActivity : AppCompatActivity() {
     //自定义阴影
     @Suppress("DEPRECATION")
     fun Modifier.uniformShadow(
-        blurRadius: Float = 15f,
-        shadowColor: Color = Color.Black.copy(alpha = 0.1f)
+        blurRadius: Float = 20f,
+        shadowColor: Color = ColorPack.secondary.copy(alpha = 0.05f)
     ) = this.drawBehind {
         drawIntoCanvas { canvas ->
             val paint = Paint().apply {
@@ -443,7 +443,12 @@ class MainActivity : AppCompatActivity() {
             "MANAGER_INTENT_VOLUME_CONTROL" -> {
                 startActivity(Intent(this, VolumeControl::class.java))
             }
-
+            "MANAGER_INTENT_WIDGET_MANAGER_CENTER" -> {
+                startActivity(Intent(this, WidgetManager::class.java))
+            }
+            "MANAGER_INTENT_LOCAL_APP_MANAGER" -> {
+                startActivity(Intent(this, LocalAppManager::class.java))
+            }
             "MANAGER_INTENT_NONE" -> {
                 showCustomToast("功能开发中")
             }
@@ -462,16 +467,21 @@ class MainActivity : AppCompatActivity() {
     //退出应用
     private fun exitApp() {
         consoleLog("主动退出应用")
-        //
+        //先回桌面
+        /*
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_HOME)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
+
+         */
+        moveTaskToBack(true)
+        //结束进程
         lifecycleScope.launch {
             delay(500)
+            val pid = android.os.Process.myPid()
+            android.os.Process.killProcess(pid)
         }
-        val pid = android.os.Process.myPid()
-        android.os.Process.killProcess(pid)
     }
 
 

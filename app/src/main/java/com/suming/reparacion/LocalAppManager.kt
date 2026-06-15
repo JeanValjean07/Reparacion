@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class ApplicationManager: AppCompatActivity() {
+class LocalAppManager: AppCompatActivity() {
 
 
 
@@ -51,7 +51,7 @@ class ApplicationManager: AppCompatActivity() {
     private fun mainThreadEntrance(){
         coroutine_read_application.launch {
             //读取应用列表
-            val appInfoList = ApplicationAccountant(this@ApplicationManager).getApplicationList()
+            val appInfoList = ApplicationAccountant(this@LocalAppManager).getApplicationList()
 
             //如果仅能读到自己,则需要提示打开权限
             if (appInfoList.size == 1 && appInfoList[0].appPackageName == packageName) {

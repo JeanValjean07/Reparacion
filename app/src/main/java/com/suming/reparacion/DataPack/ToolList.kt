@@ -41,16 +41,16 @@ object ToolList {
             ),
         ToolPackage(
             id = 6,
-            name = "桌面时钟磁贴",
-            description = "替换系统自带的时钟磁贴样式",
-            intent = "MANAGER_INTENT_NONE",
+            name = "桌面小组件",
+            description = "包含更简洁的时钟组件",
+            intent = "MANAGER_INTENT_WIDGET_MANAGER_CENTER",
 
             ),
         ToolPackage(
             id = 7,
             name = "应用列表",
             description = "查看已安装的应用列表",
-            intent = "MANAGER_INTENT_NONE",
+            intent = "MANAGER_INTENT_LOCAL_APP_MANAGER",
 
             ),
 

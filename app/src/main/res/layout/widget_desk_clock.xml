@@ -1,0 +1,66 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingBottom="30dp"
+    android:clickable="false"
+    android:background="@android:color/transparent">
+
+    <!-- 时间 -->
+    <TextClock
+        android:id="@+id/widget_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:format12Hour="h:mm"
+        android:format24Hour="HH:mm"
+        android:textSize="85sp"
+        android:textFontWeight="500"
+        android:includeFontPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="-10dp"
+        android:clickable="false"
+        >
+
+        <!-- 文本区 -->
+        <TextView
+            android:id="@+id/widget_custom_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="哎呀骇亖我力"
+            android:textSize="12sp"
+            android:clickable="false"
+            tools:ignore="HardcodedText" />
+
+
+        <!-- 日期 -->
+        <TextClock
+            android:id="@+id/widget_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="MM月dd日 E"
+            android:format24Hour="MM月dd日 E"
+            android:textSize="14sp"
+            android:layout_marginStart="10dp"
+            android:clickable="false"
+            />
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

@@ -7,10 +7,12 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BlurMaskFilter
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Process
 import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
@@ -97,6 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -109,7 +112,8 @@ class DarkModeActivity: AppCompatActivity() {
     //ContentArea
     private lateinit var NestedScrollArea: NestedScrollView
 
-    //Lifecycle
+
+
     @SuppressLint("MissingInflatedId", "InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,15 +138,13 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
-        //加载图片展示区
-        initLoadWallpapers()
+        //视图业务
+        viewWorkEntrance()
 
         //注册其他操作
         registerMoreActions()
-
         //主要操作按钮
         registerMainActions()
-
 
     }
 
@@ -364,9 +366,9 @@ class DarkModeActivity: AppCompatActivity() {
         drawIntoCanvas { canvas ->
             val paint = Paint().apply {
                 color = shadowColor
-                asFrameworkPaint().maskFilter = android.graphics.BlurMaskFilter(
+                asFrameworkPaint().maskFilter = BlurMaskFilter(
                     blurRadius,
-                    android.graphics.BlurMaskFilter.Blur.NORMAL
+                    BlurMaskFilter.Blur.NORMAL
                 )
             }
 
@@ -462,77 +464,122 @@ class DarkModeActivity: AppCompatActivity() {
     //Functions
     //注册非必要按钮
     private fun registerMoreActions(){
-        //点击图标彩蛋
-        val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
-        DarkModeIcon.setOnClickListener {
-            notice("哼,哼,啊啊啊啊啊啊啊")
+        lifecycleScope.launch(Dispatchers.Main) {
+            delay(500)
+            //点击图标彩蛋
+            val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
+            DarkModeIcon.setOnClickListener {
+                notice("哼,哼,啊啊啊啊啊啊啊")
+            }
         }
     }
     //注册主要操作区
     private fun registerMainActions(){
-
-        //点击图片区域弹出菜单
-        imageViewDark = findViewById(R.id.imageDark)
-        imageViewLight = findViewById(R.id.imageLight)
-        imageViewDark?.setOnClickListener {
-            showOptionMenu()
-        }
-        imageViewLight?.setOnClickListener {
-            showOptionMenu()
-        }
-
-
-        //按钮：选择/更改深色壁纸
-        val ButtonSelectDarkWp = findViewById<TextView>(R.id.buttonChangeDark)
-        ButtonSelectDarkWp.setOnClickListener {
-            consoleLog("开始选择深色壁纸")
-            openGalleryToPick("dark")
-        }
-        //按钮：选择/更改浅色壁纸
-        val ButtonSelectLightWp = findViewById<TextView>(R.id.buttonChangeLight)
-        ButtonSelectLightWp.setOnClickListener {
-            consoleLog("开始选择浅色壁纸")
-            openGalleryToPick("light")
-        }
-
-
-        //按钮：返回桌面
-        val ButtonSuperExit = findViewById<Button>(R.id.buttonSuperExit)
-        ButtonSuperExit.setOnClickListener {
-            moveTaskToBack(true)
-            //待添加分支：返回桌面时结束进程
-        }
-        //按钮：切换到深色壁纸
-        ButtonSwitchDark = findViewById(R.id.buttonSwitchDark)
-        ButtonSwitchDark?.setOnClickListener {
-            switchNow("dark")
-        }
-        //按钮：切换到浅色壁纸
-        ButtonSwitchLight = findViewById(R.id.buttonSwitchLight)
-        ButtonSwitchLight?.setOnClickListener {
-            switchNow("light")
-        }
-        //按钮：添加快捷方式
-        val ButtonAddTile = findViewById<Button>(R.id.buttonAddTile)
-        ButtonAddTile.setOnClickListener {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastClickMillis < CoolDownGap_createShortcut) {
-                return@setOnClickListener
-            } else {
-                lastClickMillis = currentTime
-                notice("请确保开启了创建快捷方式权限丨您也可使用磁贴")
+        lifecycleScope.launch(Dispatchers.Main) {
+            delay(500)
+            //点击图片区域弹出菜单
+            imageViewDark = findViewById(R.id.imageDark)
+            imageViewLight = findViewById(R.id.imageLight)
+            imageViewDark?.setOnClickListener {
+                showOptionMenu()
             }
-            createShortcut()
+            imageViewLight?.setOnClickListener {
+                showOptionMenu()
+            }
 
-        }
-        //按钮：清除壁纸
-        val ButtonClearWp = findViewById<Button>(R.id.buttonClear)
-        ButtonClearWp.setOnClickListener {
-            clearWallPaper()
-            notice("已清除")
-        }
 
+            //按钮：选择/更改深色壁纸
+            val ButtonSelectDarkWp = findViewById<TextView>(R.id.buttonChangeDark)
+            ButtonSelectDarkWp.setOnClickListener {
+                consoleLog("开始选择深色壁纸")
+                openGalleryToPick("dark")
+            }
+            //按钮：选择/更改浅色壁纸
+            val ButtonSelectLightWp = findViewById<TextView>(R.id.buttonChangeLight)
+            ButtonSelectLightWp.setOnClickListener {
+                consoleLog("开始选择浅色壁纸")
+                openGalleryToPick("light")
+            }
+
+
+            //按钮：返回桌面
+            val ButtonSuperExit = findViewById<Button>(R.id.buttonSuperExit)
+            ButtonSuperExit.setOnClickListener {
+                moveTaskToBack(true)
+
+            }
+            //按钮：切换到深色壁纸
+            ButtonSwitchDark = findViewById(R.id.buttonSwitchDark)
+            ButtonSwitchDark?.setOnClickListener {
+                switchNow("dark")
+            }
+            //按钮：切换到浅色壁纸
+            ButtonSwitchLight = findViewById(R.id.buttonSwitchLight)
+            ButtonSwitchLight?.setOnClickListener {
+                switchNow("light")
+            }
+            //按钮：添加快捷方式
+            val ButtonAddTile = findViewById<Button>(R.id.buttonAddTile)
+            ButtonAddTile.setOnClickListener {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastClickMillis < CoolDownGap_createShortcut) {
+                    return@setOnClickListener
+                } else {
+                    lastClickMillis = currentTime
+                    notice("请确保开启了创建快捷方式权限丨您也可使用磁贴")
+                }
+                createShortcut()
+
+            }
+            //按钮：清除壁纸
+            val ButtonClearWp = findViewById<Button>(R.id.buttonClear)
+            ButtonClearWp.setOnClickListener {
+                clearWallPaper()
+                notice("已清除")
+            }
+        }
     }
+    //视图业务
+    private fun viewWorkEntrance(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            delay(500)
+            //读取标志位
+            val darkSet = SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)
+            val lightSet = SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)
+            //预置Bitmap
+            var bitmap: Bitmap?
+            //根据标志位加载壁纸
+            if (darkSet){
+                consoleLog("viewWorkEntrance: 加载深色壁纸")
+                //
+                bitmap = loadImage("dark").second
+                //
+                withContext(Dispatchers.Main){
+                    bitmap?.let { pushToImageView(it,"dark") }
+                }
+            }else{
+                consoleLog("viewWorkEntrance: 深色壁纸标记为未设置,跳过加载")
+            }
+            if (lightSet){
+                consoleLog("viewWorkEntrance: 加载浅色壁纸")
+                //
+                bitmap = loadImage("light").second
+                //
+                withContext(Dispatchers.Main){
+                    bitmap?.let { pushToImageView(it,"light") }
+                }
+            }else{
+                consoleLog("viewWorkEntrance: 浅色壁纸标记为未设置,跳过加载")
+            }
+            //更新操作区指示文字
+            val dark = if (darkSet) 1 else 0
+            val light = if (lightSet) 1 else 0
+            withContext(Dispatchers.Main){
+                updateImageAreaActionText(dark,light)
+            }
+        }
+    }
+
     //修改滚动区域顶部内边距
     private fun updateNestTopPadding(topPadding: Int){
         //consoleLog("updateNestTopPadding: 发起修改内边距")
@@ -653,13 +700,13 @@ class DarkModeActivity: AppCompatActivity() {
                 //保存标记
                 SettingsRequestCenter.set_State_dark_paper_set(this@DarkModeActivity, true)
                 //立即加载到预览视图
-                loadImage("dark",push = true)
+                loadImage("dark")
             }
             "light" -> {
                 //保存标记
                 SettingsRequestCenter.set_State_light_paper_set(this@DarkModeActivity, true)
                 //立即加载到预览视图
-                loadImage("light",push = true)
+                loadImage("light")
             }
         }
 
@@ -713,7 +760,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //加载本地图片
     @SuppressLint("CutPasteId")
-    private fun loadImage(mode: String, needClipped: Boolean = false, push: Boolean = false): Pair<Boolean, Bitmap?> {
+    private fun loadImage(mode: String, needClipped: Boolean = false): Pair<Boolean, Bitmap?> {
         val bitmapLoader = BitmapLoader()
         when(mode){
             //深色壁纸
@@ -734,9 +781,6 @@ class DarkModeActivity: AppCompatActivity() {
                     consoleLog("loadImage: 加载深色壁纸失败")
                     return Pair(false,null)
                 }else{
-                    //推送到显示
-                    if(push) pushToImageView(bitmap,mode)
-
                     return Pair(true,bitmap)
                 }
             }
@@ -758,9 +802,6 @@ class DarkModeActivity: AppCompatActivity() {
                     consoleLog("loadImage: 加载浅色壁纸失败")
                     return Pair(false,null)
                 }else{
-                    //推送到显示
-                    if(push) pushToImageView(bitmap,mode)
-
                     return Pair(true,bitmap)
                 }
             }
@@ -777,7 +818,7 @@ class DarkModeActivity: AppCompatActivity() {
     private fun pushToImageView(bitmap: Bitmap,mode: String){
         imageViewDark = findViewById(R.id.imageDark)
         imageViewLight = findViewById(R.id.imageLight)
-
+        //
         when(mode){
             "dark" -> {
                 imageViewDark?.setImageBitmap(bitmap)
@@ -829,30 +870,6 @@ class DarkModeActivity: AppCompatActivity() {
                 fileClipped.delete()
             }
         }
-    }
-    //初始化加载壁纸
-    private fun initLoadWallpapers(){
-        //读取标志位
-        val darkSet = SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)
-        val lightSet = SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)
-        //根据标志位加载壁纸
-        if (darkSet){
-            consoleLog("initLoadWallpapers: 加载深色壁纸")
-            loadImage("dark",push = true)
-        }else{
-            consoleLog("initLoadWallpapers: 深色壁纸标记为未设置,跳过加载")
-        }
-        if (lightSet){
-            consoleLog("initLoadWallpapers: 加载浅色壁纸")
-            loadImage("light",push = true)
-        }else{
-            consoleLog("initLoadWallpapers: 浅色壁纸标记为未设置,跳过加载")
-        }
-        //更新操作区指示文字
-        val dark = if (darkSet) 1 else 0
-        val light = if (lightSet) 1 else 0
-        updateImageAreaActionText(dark,light)
-
     }
     //修改操作区指示文字
     private var actionText_dark: TextView? = null
@@ -914,8 +931,8 @@ class DarkModeActivity: AppCompatActivity() {
             moveTaskToBack(true)
             //结束进程
             if(SettingsRequestCenter.get_PREFS_End_Process_After(this@DarkModeActivity)){
-                val pid = android.os.Process.myPid()
-                android.os.Process.killProcess(pid)
+                val pid = Process.myPid()
+                Process.killProcess(pid)
             }
         }
     }
@@ -1070,8 +1087,7 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
-    //集中初始化
-    @OptIn(DelicateCoroutinesApi::class)
+    //基本初始化
     private fun init() {
         //共享视图初始化
         NestedScrollArea = findViewById(R.id.NestedScrollArea)

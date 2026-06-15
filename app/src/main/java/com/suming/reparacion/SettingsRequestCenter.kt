@@ -2,10 +2,18 @@ package com.suming.reparacion
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 
 @Suppress("unused")
 object SettingsRequestCenter {
+
+    //统一日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
 
     //设置清单-深色模式壁纸---------------------------------------------------
     private lateinit var PREFS_DarkMode: SharedPreferences
@@ -251,7 +259,96 @@ object SettingsRequestCenter {
     }
 
 
+    //设置清单-小组件---------------------------------------------------
+    private var PREFS_Widget: SharedPreferences? = null
 
+    //设置项：字体颜色配置
+    private var PREFS_Color_Config = 0
+    fun set_PREFS_Color_Config(context: Context,config: Int){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
 
+        PREFS_Color_Config = config
+        PREFS_Widget?.edit { putInt("PREFS_Color_Config", PREFS_Color_Config) }
+    }
+    fun get_PREFS_Color_Config(context: Context): Int {
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config = PREFS_Widget?.getInt("PREFS_Color_Config", 1) ?: 1
+        if (PREFS_Color_Config == 0){
+            PREFS_Widget?.edit { putInt("PREFS_Color_Config", 1) }
+        }
+        return PREFS_Color_Config
+    }
+    //简洁模式下的深色/浅色
+    private var PREFS_Color_Config_Type_1_Mode = 1
+    fun set_PREFS_Color_Config_Type_1_Mode(context: Context,mode: Int){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Type_1_Mode = mode
+        PREFS_Widget?.edit { putInt("PREFS_Color_Config_Type_1_Mode", PREFS_Color_Config_Type_1_Mode) }
+
+    }
+    fun get_PREFS_Color_Config_Type_1_Mode(context: Context): Int {
+        if (PREFS_Widget == null) {
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Type_1_Mode = PREFS_Widget?.getInt("PREFS_Color_Config_Type_1_Mode", 1) ?: 1
+
+        return PREFS_Color_Config_Type_1_Mode
+    }
+    //柔和色
+    private var PREFS_Color_Config_Type_1_Smooth = -1
+    fun set_PREFS_Color_Config_Type_1_Smooth(context: Context,useSmooth: Boolean){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Type_1_Smooth = if (useSmooth) 1 else 0
+        PREFS_Widget?.edit { putInt("PREFS_Color_Config_Type_1_Smooth", PREFS_Color_Config_Type_1_Smooth) }
+
+    }
+    fun get_PREFS_Color_Config_Type_1_Smooth(context: Context): Boolean {
+        if (PREFS_Widget == null) {
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Type_1_Smooth = PREFS_Widget?.getInt("PREFS_Color_Config_Type_1_Smooth", -1) ?: -1
+
+        if (PREFS_Color_Config_Type_1_Smooth == -1) {
+            set_PREFS_Color_Config_Type_1_Smooth(context, true)
+        }
+
+        return PREFS_Color_Config_Type_1_Smooth == 1
+    }
+
+    //实际颜色
+    private var PREFS_Color_Config_Actual = ""
+    fun set_PREFS_Color_Config_Actual(context: Context,color: String){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Actual = color
+        PREFS_Widget?.edit { putString("PREFS_Color_Config_Actual", PREFS_Color_Config_Actual) }
+    }
+    @JvmStatic
+    fun get_PREFS_Color_Config_Actual(context: Context): String {
+        if (PREFS_Widget == null) {
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+        PREFS_Color_Config_Actual = PREFS_Widget?.getString("PREFS_Color_Config_Actual", "") ?: ""
+        if (PREFS_Color_Config_Actual == "") {
+            PREFS_Color_Config_Actual = "FF000000"
+            set_PREFS_Color_Config_Actual(context, PREFS_Color_Config_Actual)
+        }
+        return PREFS_Color_Config_Actual
+    }
 
 }
