@@ -292,7 +292,7 @@ class NotificationManager: AppCompatActivity() {
         }
     }
     @Composable
-    fun CapsuleButton(onClick: () -> Unit,
+    fun CapsuleButton( onClick: () -> Unit,
                       modifier: Modifier = Modifier,
                       text: String,
                       backgroundColor: Color = ColorPack.background,
@@ -304,7 +304,7 @@ class NotificationManager: AppCompatActivity() {
                       enabled: Boolean = true,
                       horizontalPadding: Dp = 10.dp,
                       verticalPadding: Dp = 5.dp,
-                      textColor: Color = ColorPack.secondary) {
+                      textColor: Color = ColorPack.secondary ) {
         val backgroundModifier = Modifier.background(backgroundColor)
         Box(
             modifier = modifier

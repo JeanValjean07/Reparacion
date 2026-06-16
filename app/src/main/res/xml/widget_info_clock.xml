@@ -4,6 +4,7 @@
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/widget_desk_clock"
     android:resizeMode="horizontal|vertical"
+    android:previewImage="@drawable/widget_preview_clock"
     android:widgetFeatures="reconfigurable|configuration_optional"
     android:widgetCategory="home_screen">
 </appwidget-provider>

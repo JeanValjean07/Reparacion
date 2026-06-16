@@ -401,8 +401,27 @@ class DarkModeFragment: DialogFragment() {
                 .padding(top = topBarHeight),
         ) {
             Settings()
+            ButtonArea()
         }
     }
+    @Composable
+    fun ButtonArea(){
+        CapsuleButton(
+            text = "重新裁剪当前图片为微动尺寸",
+            onClick = {
+                reportFragment("FRAGMENT_INTENT_RECLIP")
+            },
+            modifier = Modifier.padding(start = 10.dp, top = 10.dp)
+        )
+        CapsuleButton(
+            text = "重新导出当前壁纸",
+            onClick = {
+                reportFragment("FRAGMENT_INTENT_OUTPORT")
+            },
+            modifier = Modifier.padding(start = 10.dp, top = 5.dp)
+        )
+    }
+
     @Composable
     fun Settings(){
         //读取设置项
@@ -445,7 +464,7 @@ class DarkModeFragment: DialogFragment() {
                 color = Color.Gray.copy(alpha = 0.1f)
             ),
             colors = CardDefaults.cardColors(containerColor = ColorPack.background)
-        ) {
+        ){
             Column(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     .fillMaxWidth()
@@ -535,7 +554,7 @@ class DarkModeFragment: DialogFragment() {
                         Switch(
                             checked = flag_enableSlightMove.value,
                             onCheckedChange = {
-                                SettingsRequestCenter.set_PREFS_SlightMove_Clip(it)
+                                EnableSlightMove(it)
                                 updateLocalPrefRemember_flag_enableSlightMove()
                             },
                             modifier = Modifier.padding(end = 10.dp)
@@ -634,6 +653,7 @@ class DarkModeFragment: DialogFragment() {
                 }
             }
         }
+
     }
     //自定义阴影
     @Suppress("DEPRECATION")
@@ -683,6 +703,68 @@ class DarkModeFragment: DialogFragment() {
         //卡片底色
         background = Color(0xFF121212),
     )
+
+
+    private fun EnableSlightMove(enable: Boolean){
+        if (enable){
+            //检查机型是否支持
+            val support = checkSlightMoveSupport()
+            //执行设置
+            if (support == 1){
+                SettingsRequestCenter.set_PREFS_SlightMove_Clip(true)
+            }else if (support == 2){
+                requireContext().showCustomToast("您的系统不支持使用微动效果，拒绝开启")
+            }else{
+                requireContext().showCustomToast("未测试您的系统兼容性，可能无法生效")
+                SettingsRequestCenter.set_PREFS_SlightMove_Clip(true)
+            }
+        }else{
+            SettingsRequestCenter.set_PREFS_SlightMove_Clip(false)
+        }
+    }
+    // support < 1 - 支持 / 2 - 不支持 / 3 - 未收录 >
+    private fun checkSlightMoveSupport(): Int{
+        val brand = Build.BRAND.lowercase()
+        val version = Build.VERSION.SDK_INT
+
+        when(brand){
+            "huawei" ->{
+                return when(version){
+                    31 ->{
+                        1
+                    }
+                    29 ->{
+                        2
+                    }
+                    else ->{
+                        3
+                    }
+                }
+            }
+            "honor" -> {
+                return when(version){
+                    31 ->{
+                        1
+                    }
+                    29 ->{
+                        2
+                    }
+                    else ->{
+                        3
+                    }
+                }
+            }
+            else ->{
+                return 3
+            }
+        }
+    }
+    //报告Fragment通信
+    private fun reportFragment(intent: String){
+        val bundle = Bundle()
+        bundle.putString("INTENT", intent)
+        parentFragmentManager.setFragmentResult("FROM_FRAGMENT_DarkModeFragment", bundle)
+    }
 
     //设置数值
     private var value_slightMove by mutableIntStateOf(0)
@@ -737,24 +819,5 @@ class DarkModeFragment: DialogFragment() {
         }
     }
 
-
-    //自定义退出逻辑
-    /*
-    private var lockPage = false
-    private fun customDismiss(){
-        if (!lockPage) {
-            Dismiss(false)
-        }
-    }
-
-    private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
-        val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-        dismiss()
-
-    }
-
-     */
 
 }

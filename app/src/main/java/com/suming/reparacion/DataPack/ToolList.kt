@@ -41,7 +41,7 @@ object ToolList {
             ),
         ToolPackage(
             id = 6,
-            name = "桌面小组件",
+            name = "小组件",
             description = "包含更简洁的时钟组件",
             intent = "MANAGER_INTENT_WIDGET_MANAGER_CENTER",
 

@@ -109,8 +109,8 @@ class DarkModeActivity: AppCompatActivity() {
     //重复过滤器
     private val CoolDownGap_createShortcut = 4000L
     private var lastClickMillis: Long = 0
-    //ContentArea
-    private lateinit var NestedScrollArea: NestedScrollView
+
+
 
 
 
@@ -138,8 +138,8 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
-        //视图业务
-        viewWorkEntrance()
+        //加载已设置的壁纸
+        LoadWallpaper()
 
         //注册其他操作
         registerMoreActions()
@@ -195,6 +195,7 @@ class DarkModeActivity: AppCompatActivity() {
             })
         }
     }
+    private lateinit var ContentRoot: NestedScrollView
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
@@ -384,55 +385,12 @@ class DarkModeActivity: AppCompatActivity() {
         }
     }
     @Composable
-    fun ContentCard(name: String, description: String, onClick: () -> Unit) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                .uniformShadow()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = ColorPack.background,
-            ),
-            onClick = onClick
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(13.dp)
-            ) {
-                //大标题
-                Text(
-                    text = name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ColorPack.primary
-                )
-                //大小标题间距
-                Spacer(modifier = Modifier.height(4.dp))
-                //小标题或描述
-                Text(
-                    text = description,
-                    fontSize = 12.sp,
-                    color = ColorPack.secondary
-                )
-            }
-        }
-    }
-    @Composable
     fun ExplanationRoot(){
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
-                .uniformShadow()
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Transparent),
+                .uniformShadow(),
             shape = RoundedCornerShape(20.dp),
             border = BorderStroke(
                 width = 0.5.dp,
@@ -451,7 +409,22 @@ class DarkModeActivity: AppCompatActivity() {
 
             ) {
                 Text(
-                    text = Descriptions.textString_description_darkmodepaper,
+                    text = Descriptions.textString_description_darkmodepaper_general,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = ColorPack.primary,
+                )
+                val brand = Build.BRAND.lowercase()
+                if (brand.contains("huawei") || brand.contains("honor")){
+                    Text(
+                        text = Descriptions.textString_description_darkmodepaper_huawei,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ColorPack.primary,
+                    )
+                }
+                Text(
+                    text = Descriptions.textString_description_author_sign,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = ColorPack.primary,
@@ -461,7 +434,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //访问xml颜色表 colorResource(id = R.color.HeadText)
 
-    //Functions
+    //Main Thread Functions
     //注册非必要按钮
     private fun registerMoreActions(){
         lifecycleScope.launch(Dispatchers.Main) {
@@ -539,8 +512,8 @@ class DarkModeActivity: AppCompatActivity() {
             }
         }
     }
-    //视图业务
-    private fun viewWorkEntrance(){
+    //加载已设置的图片
+    private fun LoadWallpaper(){
         lifecycleScope.launch(Dispatchers.IO) {
             delay(500)
             //读取标志位
@@ -579,18 +552,101 @@ class DarkModeActivity: AppCompatActivity() {
             }
         }
     }
-
-    //修改滚动区域顶部内边距
-    private fun updateNestTopPadding(topPadding: Int){
-        //consoleLog("updateNestTopPadding: 发起修改内边距")
-        NestedScrollArea.setPadding(0, topPadding, 0, 0)
+    //处理获取的图片
+    private fun HandleImageUri(uri: Uri, mode: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            //获取目标图片
+            val originalBitmap = getImageFile(uri)
+            if (originalBitmap == null) {
+                withContext(Dispatchers.Main){ showCustomToast("获取图片时发生问题") }
+                return@launch
+            }
+            //处理图片裁剪为屏幕分辨率
+            val croppedBitmap = processImageCrop(originalBitmap)
+            //处理图片裁剪为微动尺寸
+            val clippedBitmap = processImageClip(croppedBitmap)
+            //保存图片
+            saveImage(croppedBitmap, clippedBitmap, mode)
+            //将图片填充到视图
+            withContext(Dispatchers.Main){
+                pushToImageView(croppedBitmap,mode)
+            }
+        }
     }
-    //调用图片选择器
+
+    //Functions
+    //保存图片
+    private fun saveImage(croppedBitmap: Bitmap, clippedBitmap: Bitmap, mode: String){
+        //保存图片到内部
+        saveImageInternal(croppedBitmap, clippedBitmap, mode)
+        //保存图片到外部相册
+        saveImageToExternal(croppedBitmap, clippedBitmap)
+        //在设置清单中写入标志位
+        when (mode) {
+            "dark" -> {
+                //保存标记
+                SettingsRequestCenter.set_State_dark_paper_set(this@DarkModeActivity, true)
+                //立即加载到预览视图
+                loadImage("dark")
+            }
+            "light" -> {
+                //保存标记
+                SettingsRequestCenter.set_State_light_paper_set(this@DarkModeActivity, true)
+                //立即加载到预览视图
+                loadImage("light")
+            }
+        }
+    }
+    private fun saveImageInternal(croppedBitmap: Bitmap, clippedBitmap: Bitmap, mode: String){
+        //定义文件实例
+        val wallpaperFileWrapper = WallpaperFileWrapper()
+        val (file,fileClipped) = wallpaperFileWrapper.wrapFile(this,mode = mode)
+
+        //保存原图
+        FileOutputStream(file).use { outputStream ->
+            croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        }
+        //保存裁剪后的图片
+        FileOutputStream(fileClipped).use { outputStream ->
+            clippedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        }
+
+    }
+    private fun saveImageToExternal(bitmap: Bitmap, clippedBitmap: Bitmap, MustSave: Boolean = false) {
+        val doit = MustSave || SettingsRequestCenter.get_PREFS_Save_Clip_Out(this@DarkModeActivity)
+        if (doit) {
+            //保存原图
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "original.jpg")
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/使用过的壁纸")
+            }
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)?.let {
+                val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                outputStream?.use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                }
+            }
+            //保存裁剪后的图片
+            val clippedValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "clipped.jpg")
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/使用过的壁纸")
+            }
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, clippedValues)?.let {
+                val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                outputStream?.use { stream ->
+                    clippedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                }
+            }
+        }
+    }
+    //图片选择器
     private var pickImageMode: String = ""
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK && result.data != null) {
             val selectedImageUri = result.data?.data
-            selectedImageUri?.let { processAndSaveImage(it, pickImageMode) }
+            selectedImageUri?.let { HandleImageUri(it, pickImageMode) }
         }
     }
     private fun openGalleryToPick(mode: String) {
@@ -598,8 +654,8 @@ class DarkModeActivity: AppCompatActivity() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         pickImageLauncher.launch(intent)
     }
-    //处理并保存图片
-    private fun processAndSaveImage(uri: Uri, mode: String) {
+    //将图片裁剪为屏幕分辨率
+    private fun processImageCrop(originalBitmap: Bitmap): Bitmap {
         //infoBitmap：获取图片信息
         fun infoBitmap(bitmapForScale: Bitmap): Pair<Int, Int> {
             //获取图片原始分辨率
@@ -672,15 +728,6 @@ class DarkModeActivity: AppCompatActivity() {
             return Bitmap.createBitmap(bitmapForScale,x,y, screenWidth,height)
         }
 
-        //取出目标图片
-        val originalBitmap =  contentResolver.openInputStream(uri)?.use { inputStream ->
-            BitmapFactory.decodeStream(inputStream)
-        }
-        //检查图片是否有效
-        if (originalBitmap == null) {
-            showCustomToast("图片读取失败")
-            return
-        }
         //创建副本
         val originalBitmapForScale = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
         //获取必要信息
@@ -688,78 +735,39 @@ class DarkModeActivity: AppCompatActivity() {
         val (screenWidth, screenHeight) = infoScreen()
         //裁剪为屏幕分辨率
         val croppedBitmap = scaleAndCropBitmap(originalBitmapForScale,picWidth,picHeight,screenWidth,screenHeight)
-        //裁剪微动版本
-        val clippedBitmap = clipBitmap(croppedBitmap,screenWidth,screenHeight)
-        //保存图片到内部
-        saveImageInternal(croppedBitmap, clippedBitmap, mode)
 
-
-        //在设置清单中写入标志位
-        when (mode) {
-            "dark" -> {
-                //保存标记
-                SettingsRequestCenter.set_State_dark_paper_set(this@DarkModeActivity, true)
-                //立即加载到预览视图
-                loadImage("dark")
-            }
-            "light" -> {
-                //保存标记
-                SettingsRequestCenter.set_State_light_paper_set(this@DarkModeActivity, true)
-                //立即加载到预览视图
-                loadImage("light")
-            }
+        return croppedBitmap
+    }
+    //将图片裁剪为微动尺寸
+    private fun processImageClip(cropBitmap: Bitmap): Bitmap {
+        val y = SettingsRequestCenter.get_VALUE_SlightMove(this@DarkModeActivity)
+        val originalWidth = cropBitmap.width
+        val originalHeight = cropBitmap.height
+        //计算裁剪后的高度
+        val newHeight = originalHeight - 2 * y
+        //确保裁剪后的高度有效
+        if (newHeight <= 0) {
+            consoleLog("发生严重错误：期望高度超过了原图高度")
+            return cropBitmap
         }
 
-        //可选 - 保存图片到外部相册
-        if (SettingsRequestCenter.get_PREFS_Save_Clip_Out(this@DarkModeActivity)) {
-            saveImageToExternal(croppedBitmap, clippedBitmap)
+        return Bitmap.createBitmap(cropBitmap, 0, y, originalWidth, newHeight)
+    }
+    //获取图片文件
+    private fun getImageFile(uri: Uri): Bitmap? {
+        //取出目标图片
+        return  contentResolver.openInputStream(uri)?.use { inputStream ->
+            BitmapFactory.decodeStream(inputStream)
         }
     }
-    //保存图片到内部
-    private fun saveImageInternal(croppedBitmap: Bitmap, clippedBitmap: Bitmap, mode: String){
-        //定义文件实例
-        val wallpaperFileWrapper = WallpaperFileWrapper()
-        val (file,fileClipped) = wallpaperFileWrapper.wrapFile(this,mode = mode)
 
-        //保存原图
-        FileOutputStream(file).use { outputStream ->
-            croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        }
-        //保存裁剪后的图片
-        FileOutputStream(fileClipped).use { outputStream ->
-            clippedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        }
+    //修改滚动区域顶部内边距
+    private fun updateNestTopPadding(topPadding: Int){
+        consoleLog("updateNestTopPadding: 发起修改内边距")
+        ContentRoot.setPadding(0, topPadding, 0, 0)
+    }
 
-    }
-    //保存图片到外部
-    private fun saveImageToExternal(bitmap: Bitmap, clippedBitmap: Bitmap) {
-        //保存原图
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "original.jpg")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/使用过的壁纸")
-        }
-        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)?.let {
-            val outputStream: OutputStream? = contentResolver.openOutputStream(it)
-            outputStream?.use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-            }
-        }
-        //保存裁剪后的图片
-        val clippedValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "clipped.jpg")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/使用过的壁纸")
-        }
-        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, clippedValues)?.let {
-            val outputStream: OutputStream? = contentResolver.openOutputStream(it)
-            outputStream?.use { stream ->
-                clippedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-            }
-        }
-    }
     //加载本地图片
-    @SuppressLint("CutPasteId")
     private fun loadImage(mode: String, needClipped: Boolean = false): Pair<Boolean, Bitmap?> {
         val bitmapLoader = BitmapLoader()
         when(mode){
@@ -914,19 +922,117 @@ class DarkModeActivity: AppCompatActivity() {
         //打开DarkModeFragment
         val fragment = DarkModeFragment()
         fragment.show(supportFragmentManager, "DarkModeFragment")
+        //注册Fragment通信
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DarkModeFragment", this) { _, bundle ->
+            val ReceiveIntent = bundle.getString("INTENT")
+            when(ReceiveIntent){
+                "FRAGMENT_INTENT_RECLIP" -> {
+                     reClipCropImage()
+                }
+                "FRAGMENT_INTENT_OUTPORT" -> {
+                    exportWallpaper()
+                }
+
+            }
+        }
     }
     //设置系统壁纸核心方法
     private fun applySystemWallpaper(bitmap: Bitmap){
         val wallpaperSetor = WallpaperSetor()
         wallpaperSetor.applySystemWallpaper(bitmap, this)
     }
+    //重新裁剪微动版本
+    private fun reClipCropImage(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            consoleLog("重新裁剪微动版本壁纸")
+            //检查设置
+            val enableSlightMove = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this@DarkModeActivity)
+            val slightMoveValue = SettingsRequestCenter.get_VALUE_SlightMove(this@DarkModeActivity)
+            if (!enableSlightMove || slightMoveValue == 0){
+                withContext(Dispatchers.Main){
+                    showCustomToast("当前未开启微动功能或数值为0，拒绝执行")
+                }
+                return@launch
+            }
 
+            //读取深色壁纸和浅色壁纸
+            val darkBitmap = loadImage("dark",false).second
+            val lightBitmap = loadImage("light",false).second
+
+            //检查是否存在(只负责弹提示)
+            withContext(Dispatchers.Main){
+                if (darkBitmap == null && lightBitmap == null){
+                    showCustomToast("当前未设置任何壁纸")
+                    return@withContext
+                }else if (darkBitmap != null && lightBitmap != null){
+                    showCustomToast("处理中")
+                }else{
+                    if (darkBitmap != null){
+                        showCustomToast("当前仅设置了深色壁纸，正在处理")
+                    }
+                    if (lightBitmap != null){
+                        showCustomToast("当前仅设置了浅色壁纸，正在处理")
+                    }
+                }
+            }
+
+
+            //执行裁剪
+            if (darkBitmap != null){
+                //裁剪微动版本
+                val clippedBitmap = processImageClip(darkBitmap)
+                //保存
+                saveImageInternal(darkBitmap,clippedBitmap, "dark")
+            }
+            if (lightBitmap != null){
+                //裁剪微动版本
+                val clippedBitmap = processImageClip(lightBitmap)
+                //保存
+                saveImageInternal(lightBitmap,clippedBitmap, "light")
+            }
+        }
+    }
+    //导出壁纸
+    private fun exportWallpaper(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            consoleLog("导出壁纸")
+            //读取深色壁纸和浅色壁纸
+            val darkBitmap = loadImage("dark",false).second
+            val darkBitmapClipped = loadImage("dark",true).second
+            val lightBitmap = loadImage("light",false).second
+            val lightBitmapClipped = loadImage("light",true).second
+
+            //弹出提示
+            withContext(Dispatchers.Main){
+                if (darkBitmap == null && lightBitmap == null){
+                    showCustomToast("当前未设置任何壁纸，无法导出")
+                }else if (darkBitmap != null && lightBitmap != null){
+                    showCustomToast("导出中")
+                }else{
+                    if (darkBitmap != null){
+                        showCustomToast("当前仅设置了深色壁纸，正在导出")
+                    }
+                    if (lightBitmap != null){
+                        showCustomToast("当前仅设置了浅色壁纸，正在导出")
+                    }
+                }
+            }
+
+            //执行导出
+            if (darkBitmap != null && darkBitmapClipped != null){
+                saveImageToExternal(darkBitmap, darkBitmapClipped, true)
+            }
+            if (lightBitmap != null && lightBitmapClipped != null){
+                saveImageToExternal(lightBitmap, lightBitmapClipped, true)
+            }
+        }
+    }
 
     //功能执行函数
     //倒计时后退出到桌面
     private fun autoFinish(){
         //先退回桌面
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO){
             delay(2000)
             moveTaskToBack(true)
             //结束进程
@@ -937,66 +1043,80 @@ class DarkModeActivity: AppCompatActivity() {
         }
     }
     //立即切换到指定模式壁纸
-    @OptIn(DelicateCoroutinesApi::class)
     private var ButtonSwitchDark: Button? = null
-    private fun switchNowToDark(exitAfter: Boolean = false){
-        //先确认有没有图,修改按钮提示文字
-        if (SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)) {
-            //再确认文件是否存在
-            val needClipped = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this)
-            val (success,bitmap) = loadImage("dark",needClipped)
-            if (success){
-                if (bitmap != null){
-                    //应用到系统
-                    setButtonInfo("dark","正在应用深色壁纸,请稍等",true)
-                    lifecycleScope.launch (Dispatchers.IO){
+    private fun switchNowToDark(){
+        lifecycleScope.launch(Dispatchers.IO){
+            //先确认有没有图,修改按钮提示文字
+            if (SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)) {
+                //再确认文件是否存在
+                val needClipped = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this@DarkModeActivity)
+                val (success,bitmap) = loadImage("dark",needClipped)
+                if (success){
+                    if (bitmap != null){
+                        //应用到系统
+                        withContext(Dispatchers.Main){
+                            setButtonInfo("dark","正在应用深色壁纸,请稍等",true)
+                        }
                         //执行应用
                         applySystemWallpaper(bitmap)
                         //自动退出
-                        if (exitAfter) autoFinish()
+                        autoFinish()
+                    }else{
+                        withContext(Dispatchers.Main){
+                            setButtonInfo("dark","深色壁纸读取失败",true)
+                            endActionGapJob()
+                        }
                     }
                 }else{
-                    setButtonInfo("dark","深色壁纸读取失败",true)
-                    endActionGapJob()
+                    withContext(Dispatchers.Main){
+                        setButtonInfo("dark","深色壁纸读取失败",true)
+                        endActionGapJob()
+                    }
                 }
             }else{
-                setButtonInfo("dark","深色壁纸读取失败",true)
-                endActionGapJob()
+                withContext(Dispatchers.Main){
+                    setButtonInfo("dark","您似乎并未设置深色壁纸",false)
+                    noPaperNoticeJob()
+                }
             }
-        }else{
-            setButtonInfo("dark","您似乎并未设置深色壁纸",false)
-            noPaperNoticeJob()
         }
     }
     private var ButtonSwitchLight: Button? = null
-    private fun switchNowToLight(exitAfter: Boolean = false){
-        //先确认有没有图,修改按钮提示文字
-        if (SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)) {
-            //再确认文件是否存在
-            val needClipped = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this)
-            val (success,bitmap) = loadImage("light",needClipped)
-            if (success){
-                if (bitmap != null){
-                    //应用到系统
-                    setButtonInfo("light","正在应用浅色壁纸,请稍等",true)
-                    //
-                    lifecycleScope.launch (Dispatchers.IO){
+    private fun switchNowToLight(){
+        lifecycleScope.launch(Dispatchers.IO){
+            //先确认有没有图,修改按钮提示文字
+            if (SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)) {
+                //再确认文件是否存在
+                val needClipped = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this@DarkModeActivity)
+                val (success,bitmap) = loadImage("light",needClipped)
+                if (success){
+                    if (bitmap != null){
+                        //刷新按钮提示词
+                        withContext(Dispatchers.Main){
+                            setButtonInfo("light","正在应用浅色壁纸,请稍等",true)
+                        }
                         //执行应用
                         applySystemWallpaper(bitmap)
                         //自动退出
-                        if (exitAfter) autoFinish()
+                        autoFinish()
+                    }else{
+                        withContext(Dispatchers.Main){
+                            setButtonInfo("light","浅色壁纸读取失败",true)
+                            endActionGapJob()
+                        }
                     }
                 }else{
-                    setButtonInfo("light","浅色壁纸读取失败",true)
-                    endActionGapJob()
+                    withContext(Dispatchers.Main){
+                        setButtonInfo("light","浅色壁纸读取失败",true)
+                        endActionGapJob()
+                    }
                 }
             }else{
-                setButtonInfo("light","浅色壁纸读取失败",true)
-                endActionGapJob()
+                withContext(Dispatchers.Main){
+                    setButtonInfo("light","您似乎并未设置浅色壁纸",false)
+                    noPaperNoticeJob()
+                }
             }
-        }else{
-            setButtonInfo("light","您似乎并未设置浅色壁纸",false)
-            noPaperNoticeJob()
         }
     }
     //立即切换到指定模式壁纸入口
@@ -1009,9 +1129,9 @@ class DarkModeActivity: AppCompatActivity() {
         actionGapJob()
         //执行切换
         if (mode == "dark") {
-            switchNowToDark(exitAfter = true)
+            switchNowToDark()
         } else if (mode == "light") {
-            switchNowToLight(exitAfter = true)
+            switchNowToLight()
         }
     }
     //执行间隔控制
@@ -1090,7 +1210,7 @@ class DarkModeActivity: AppCompatActivity() {
     //基本初始化
     private fun init() {
         //共享视图初始化
-        NestedScrollArea = findViewById(R.id.NestedScrollArea)
+        ContentRoot = findViewById(R.id.NestedScrollArea)
 
     }
     //显示短通知

@@ -151,7 +151,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info" />
+                android:resource="@xml/widget_info_clock" />
         </receiver>
 
         <!-- 开放源代码许可(谷歌OSS) -->
@@ -164,11 +164,8 @@
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- TrashCan - 存档不再使用的旧代码 -->
-        <activity android:name="com.suming.reparacion.AntiqueZip.VeryOLDNotiManager"
-            android:label="老式通知管理页"
-            android:exported="true"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
-            />
+
+
 
     </application>
 
