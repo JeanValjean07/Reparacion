@@ -350,5 +350,26 @@ object SettingsRequestCenter {
         }
         return PREFS_Color_Config_Actual
     }
+    //自定义文本
+    private var PREFS_Color_Config_Custom_Text = ""
+    fun set_PREFS_Color_Config_Custom_Text(context: Context,text: String){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Custom_Text = text
+        PREFS_Widget?.edit { putString("PREFS_Color_Config_Custom_Text", PREFS_Color_Config_Custom_Text) }
+    }
+    @JvmStatic
+    fun get_PREFS_Color_Config_Custom_Text(context: Context): String {
+        if (PREFS_Widget == null) {
+            PREFS_Widget = context.getSharedPreferences("PREFS_Widget", 0)
+        }
+
+        PREFS_Color_Config_Custom_Text =
+            PREFS_Widget?.getString("PREFS_Color_Config_Custom_Text", "") ?: ""
+
+        return PREFS_Color_Config_Custom_Text
+    }
 
 }

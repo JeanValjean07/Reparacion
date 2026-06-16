@@ -2,6 +2,7 @@ package com.suming.reparacion
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -46,6 +49,9 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BurstMode
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SnippetFolder
 import androidx.compose.material3.Card
@@ -57,7 +63,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.ripple
@@ -73,6 +82,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -80,6 +92,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -87,6 +100,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.suming.reparacion.ActivityComponents.MainViewModel
 import com.suming.reparacion.ActivityComponents.WidgetManager.ConfigCenter
+import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.DataPack.ToolPackage
 
 class WidgetManager : AppCompatActivity() {
@@ -213,7 +227,25 @@ class WidgetManager : AppCompatActivity() {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
+                        CircleButton(
+                            onClick = {
+                                showCustomToast("修改设置后，请点击一次桌面小组件以触发刷新")
+                            },
+                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
+                            size = 40.dp,
+                            border = BorderStroke(
+                                width = 0.5.dp,
+                                color = Color.Gray.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.padding(end = 15.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.QuestionMark,
+                                contentDescription = "刷新",
+                                modifier = Modifier.background(Color.Transparent),
+                                tint = ColorPack.secondary
+                            )
+                        }
                     }
                 }
             }
@@ -289,58 +321,6 @@ class WidgetManager : AppCompatActivity() {
 
     }
     @Composable
-    fun CapsuleButton(onClick: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      text: String,
-                      backgroundColor: Color = ColorPack.background,
-                      border: BorderStroke = BorderStroke(
-                          width = 0.5.dp,
-                          color = Color.Gray.copy(alpha = 0.1f)
-                      ),
-                      elevation: Dp = 2.dp,
-                      enabled: Boolean = true,
-                      horizontalPadding: Dp = 10.dp,
-                      verticalPadding: Dp = 5.dp,
-                      textColor: Color = ColorPack.secondary) {
-        val backgroundModifier = Modifier.background(backgroundColor)
-        Box(
-            modifier = modifier
-                .wrapContentWidth()
-                .height(35.dp)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = Color.Black.copy(alpha = 0.4f),
-                    ambientColor = Color.Black.copy(alpha = 0.4f)
-                )
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .then(Modifier.border(border, CircleShape))
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() }
-                .padding(horizontal = horizontalPadding, vertical = verticalPadding)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = text,
-                    fontSize = 12.sp,
-                    color = textColor,
-                )
-            }
-        }
-    }
-    @Composable
     fun ContentRoot(topBarHeight: Dp) {
         Column(
             modifier = Modifier
@@ -348,11 +328,14 @@ class WidgetManager : AppCompatActivity() {
                 .verticalScroll(rememberScrollState())
                 .padding(top = topBarHeight),
         ) {
-            Settings()
+            //颜色配置卡片
+            TextColorConfigCard()
+            //文本配置卡片
+            TextCustomAreaCard()
         }
     }
     @Composable
-    fun Settings(){
+    fun TextColorConfigCard(){
         //设置项1 - 使用字体颜色配置 < 1 - 仅黑白 / 2 - MD3自动取色 / 3 - 完全自定义 >
         val flag_colorConfig = remember { mutableIntStateOf(0) }
         val state_showColorConfigMenu = remember { mutableStateOf(false) }
@@ -373,15 +356,14 @@ class WidgetManager : AppCompatActivity() {
         fun updateLocalPrefRemember_flag_colorConFig_Type_1_smooth(value: Boolean = false){
             flag_colorConFig_Type_1_Smooth.value = value
         }
-
-        //集中读取设置
+        //读取设置
         LaunchedEffect(Unit) {
             flag_colorConfig.intValue = SettingsRequestCenter.get_PREFS_Color_Config(this@WidgetManager)
             flag_colorConFig_Type_1_Mode.intValue = SettingsRequestCenter.get_PREFS_Color_Config_Type_1_Mode(this@WidgetManager)
             flag_colorConFig_Type_1_Smooth.value = SettingsRequestCenter.get_PREFS_Color_Config_Type_1_Smooth(this@WidgetManager)
         }
 
-        //颜色配置卡片Root
+        //
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -677,8 +659,12 @@ class WidgetManager : AppCompatActivity() {
                                             }
                                             flag_colorConFig_Type_1_Smooth.value = it
                                         },
-                                        modifier = Modifier.padding(end = 10.dp)
-                                    )
+                                        modifier = Modifier.padding(end = 10.dp),
+                                        colors = SwitchDefaults.colors(
+                                            //checkedThumbColor = ColorPack.secondary,
+                                            checkedTrackColor = ColorPack.tertiary,
+                                            )
+                                        )
                                 }
                             }
                         }
@@ -694,7 +680,144 @@ class WidgetManager : AppCompatActivity() {
                 }
             }
         }
+    }
+    @Composable
+    fun TextCustomAreaCard(){
+        //焦点管理器
+        val focusRequester = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        val state_textFieldFocused = remember { mutableStateOf(false) }
+        //自定义文本
+        var customText by remember { mutableStateOf("") }
 
+        //加载配置
+        LaunchedEffect(Unit) {
+            customText = SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text(this@WidgetManager)
+        }
+
+        //
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+                .uniformShadow()
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .background(Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
+            border = BorderStroke(
+                width = 0.5.dp,
+                color = Color.Gray.copy(alpha = 0.1f)
+            ),
+            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
+        ){
+            Column(
+                modifier = Modifier.fillMaxWidth().wrapContentHeight()
+            ){
+                //标题
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column (
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "自定义文本",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ColorPack.primary,
+                            modifier = Modifier.padding(start = 0.dp)
+                        )
+                        Spacer(modifier = Modifier.padding(top = 5.dp))
+                        Text(
+                            text = "自定义文本将显示在日期左侧",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = ColorPack.secondary,
+                        )
+                    }
+                }
+                //文本框
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.wrapContentHeight().fillMaxWidth()
+                ) {
+                    TextField(
+                        value = customText,
+                        onValueChange = { customText = it },
+                        colors = TextFieldDefaults.colors(
+                            //背景色
+                            focusedContainerColor = ColorPack.onBackground,         //获得焦点时的背景色
+                            unfocusedContainerColor = ColorPack.onBackground,    //失去焦点时的背景色
+                            //文字颜色
+                            focusedTextColor = ColorPack.secondary,       //获得焦点时文字颜色
+                            unfocusedTextColor = ColorPack.secondary,     //失去焦点时文字颜色
+                            //下方横线
+                            focusedIndicatorColor = ColorPack.tertiary,  //获得焦点时横线颜色
+                            unfocusedIndicatorColor = ColorPack.secondary, //失去焦点时横线颜色
+                            //光标
+                            cursorColor = ColorPack.tertiary,
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 10.dp, end = 0.dp, bottom = 5.dp)
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { focusState ->
+                                //仅在失去焦点时触发保存
+                                if (focusState.isFocused) {
+                                    consoleLog("TextField：焦点变更：focusState.isFocused")
+                                    //
+                                    state_textFieldFocused.value = true
+                                }
+                                if (!focusState.isFocused) {
+                                    if(state_textFieldFocused.value){
+                                        //仅在失去焦点时保存
+                                        SettingsRequestCenter.set_PREFS_Color_Config_Custom_Text(this@WidgetManager, customText)
+                                        //
+                                        showCustomToast("已保存文本")
+                                    }
+                                }
+                            },
+                    )
+                    Spacer(modifier = Modifier.padding(start = 10.dp))
+                    Card(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(50.dp)
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(5.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
+                        colors = CardDefaults.cardColors(ColorPack.tertiary),
+                        onClick = { focusManager.clearFocus() },
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxHeight().wrapContentWidth()
+                        ) {
+                            Text(
+                                text = "保存",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = ColorPack.secondary,
+                                modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
+                            )
+                            Icon(
+                                Icons.Filled.Save,
+                                contentDescription = "保存文本",
+                                modifier = Modifier.height(15.dp).background(Color.Transparent).padding(end = 8.dp),
+                                tint = ColorPack.secondary,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     //自定义阴影
@@ -749,7 +872,7 @@ class WidgetManager : AppCompatActivity() {
         background = Color(0xFF121212),
         onBackground = Color(0xFF212121),
         //主题色
-        tertiary = Color(0xFF7C4DFF),
+        tertiary = Color(0xFF6048A0),
 
 
         )
@@ -757,6 +880,12 @@ class WidgetManager : AppCompatActivity() {
 
 
 
+    //统一日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
 
 
 

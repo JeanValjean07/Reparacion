@@ -89,6 +89,10 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         views.setTextColor(R.id.widget_date, actualColor);
         views.setTextColor(R.id.widget_custom_text, actualColor);
 
+        //应用自定义文本
+        String customText = SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text(context);
+        views.setTextViewText(R.id.widget_custom_text, customText);
+
         //应用空点击事件到全部
         views.setOnClickPendingIntent(R.id.widget_root, pendingIntent_no_action);
         views.setOnClickPendingIntent(R.id.widget_time, pendingIntent_no_action);
@@ -103,8 +107,11 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
 
     //日志
+    static final boolean LOG_ENABLE = false;
     static void consoleLog(String msg) {
-        Log.d("SuMing", msg);
+        if (LOG_ENABLE) {
+            Log.d("SuMing", msg);
+        }
     }
 
 
