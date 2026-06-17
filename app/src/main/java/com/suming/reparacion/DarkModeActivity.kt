@@ -23,9 +23,6 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,7 +33,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,10 +58,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,9 +76,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.graphics.scale
-import androidx.core.view.WindowCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.ActivityComponents.DarkMode.DarkModeFragment
@@ -94,7 +85,6 @@ import com.suming.reparacion.DataPack.Descriptions
 import com.suming.reparacion.FunctionalPack.BitmapLoader
 import com.suming.reparacion.FunctionalPack.WallpaperFileWrapper
 import com.suming.reparacion.FunctionalPack.WallpaperSetor
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -106,19 +96,11 @@ import java.io.OutputStream
 
 @Suppress("LocalVariableName")
 class DarkModeActivity: AppCompatActivity() {
-    //重复过滤器
-    private val CoolDownGap_createShortcut = 4000L
-    private var lastClickMillis: Long = 0
-
-
-
-
 
     @SuppressLint("MissingInflatedId", "InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //界面配置
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_dark_mode)
         //准备工作
@@ -138,6 +120,7 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
+
         //加载已设置的壁纸
         LoadWallpaper()
 
@@ -145,6 +128,7 @@ class DarkModeActivity: AppCompatActivity() {
         registerMoreActions()
         //主要操作按钮
         registerMainActions()
+
 
     }
 
@@ -166,32 +150,18 @@ class DarkModeActivity: AppCompatActivity() {
             .wrapContentHeight()
             .fillMaxWidth()
             .background(Color.Transparent)) {
-
-            //顶部栏高度值
+            //获取顶部栏高度值
             val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-            var topBarHeight by remember { mutableIntStateOf(300) }
-            val topPaddingDp = with(LocalDensity.current) {
-                (statusBarHeight + topBarHeight).toDp()
-            }
-
-            //顶部栏高度值动画 也可不使用动画单纯传值
-            //曲线可选 CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
-            val animatedTopPadding by animateDpAsState(
-                targetValue = topPaddingDp,
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = FastOutSlowInEasing
-                )
-            )
 
 
             //最顶层
             BrushArea()
             AdvancedTopBar(onHeightMeasured = { height ->
+                consoleLog("AdvancedTopBar:：onHeightMeasured：测量高度: $height ,顶部栏高度: $statusBarHeight")
                 //更新内边距
-                updateNestTopPadding(height + statusBarHeight)
-                //
-                topBarHeight = height
+                if (statusBarHeight > 0){
+                    updateNestTopPadding(height + statusBarHeight)
+                }
             })
         }
     }
@@ -206,6 +176,7 @@ class DarkModeActivity: AppCompatActivity() {
                 .statusBarsPadding()
                 .height(60.dp)
                 .onGloballyPositioned { coordinates ->
+                    consoleLog("AdvancedTopBar: onGloballyPositioned：测量高度: ${coordinates.size.height}")
                     onHeightMeasured(coordinates.size.height)
                 },
             color = Color.Transparent,
@@ -767,6 +738,10 @@ class DarkModeActivity: AppCompatActivity() {
         ContentRoot.setPadding(0, topPadding, 0, 0)
     }
 
+    //重复过滤器
+    private val CoolDownGap_createShortcut = 4000L
+    private var lastClickMillis: Long = 0
+
     //加载本地图片
     private fun loadImage(mode: String, needClipped: Boolean = false): Pair<Boolean, Bitmap?> {
         val bitmapLoader = BitmapLoader()
@@ -1198,7 +1173,7 @@ class DarkModeActivity: AppCompatActivity() {
         val shortcut = ShortcutInfo.Builder(this, "dark_mode_shortcut")
             .setShortLabel("切换壁纸")
             .setLongLabel("根据当前模式切换壁纸")
-            .setIcon(Icon.createWithResource(this, R.drawable.ic_shortcut))
+            .setIcon(Icon.createWithResource(this, R.drawable.ic_shortcut_dark_paper))
             .setIntent(shortcutIntent)
             .build()
 
@@ -1210,7 +1185,7 @@ class DarkModeActivity: AppCompatActivity() {
     //基本初始化
     private fun init() {
         //共享视图初始化
-        ContentRoot = findViewById(R.id.NestedScrollArea)
+        ContentRoot = findViewById(R.id.ScrollContentRoot)
 
     }
     //显示短通知

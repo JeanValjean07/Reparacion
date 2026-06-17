@@ -9,59 +9,33 @@
     android:background="@color/Background"
     tools:context=".GuidanceActivity"
     tools:ignore="HardcodedText">
-    <!-- AppBar -->
-    <com.google.android.material.appbar.AppBarLayout
+
+    <!-- 顶部栏(compose搭建) -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/TopBarCompose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/HeadBackground"
-        android:outlineSpotShadowColor="@color/HeadText"
-        app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText">
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar1"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:background="@android:color/transparent"
-            app:contentInsetStart="0dp"
-            android:elevation="1dp">
-            <!-- AppBar# -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
-                <ImageButton
-                    android:id="@+id/buttonExit"
-                    android:layout_width="50dp"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start|center"
-                    android:layout_marginStart="5dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="退出"
-                    android:padding="11dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_go_back_2"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start|center"
-                    android:gravity="center"
-                    android:padding="5dp"
-                    android:text="指南和帮助"
-                    android:textColor="@color/HeadText"
-                    android:textSize="20sp" />
-            </LinearLayout>
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
+        android:elevation="10dp"
+        />
 
+
+    <!-- 内容区域 -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/ScrollContentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- 卡片1：反馈问题 -->
+            <!-- spaceTop丨顶部占位 -->
+            <Space
+                android:id="@+id/ScrollTopSpace"
+                android:layout_width="match_parent"
+                android:layout_height="80dp" />
+
+            <!-- 卡片：反馈问题 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -69,6 +43,7 @@
                 android:layout_marginTop="2dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/ContentCard_Background"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
                 <LinearLayout
@@ -96,52 +71,10 @@
                         android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!-- 卡片2：素材来源 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="5dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0"
-                        android:padding="16dp"
-                        android:text="本APP图标素材来源于"
-                        android:textSize="13sp" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-                    <FrameLayout
-                        android:id="@+id/buttonGoSvgRepo"
-                        android:layout_width="110dp"
-                        android:layout_height="match_parent">
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@color/White" />
-                        <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:src="@drawable/ic_svgrepo"
-                            android:layout_gravity="center"
-                            android:contentDescription="SVGRepo" />
-                    </FrameLayout>
 
 
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

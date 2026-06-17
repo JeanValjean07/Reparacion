@@ -18,12 +18,11 @@
         android:elevation="10dp"
         />
 
-    <!-- 滚动内容区域 -->
+    <!-- 内容区域 -->
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/NestedScrollArea"
+        android:id="@+id/ScrollContentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="30dp"
         android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
@@ -32,7 +31,7 @@
             <!-- 顶部装饰 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="5dp"
@@ -69,7 +68,6 @@
                     </HorizontalScrollView>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
             <!-- 壁纸卡 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -203,7 +201,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
             <!-- 按钮区 -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -251,7 +248,6 @@
                     android:textColor="@color/ButtonText" />
 
             </LinearLayout>
-
             <!-- ExplanationCompose -->
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/ExplanationCompose"

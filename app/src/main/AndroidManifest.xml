@@ -86,6 +86,7 @@
         <!-- 设置 -->
         <activity android:name="com.suming.reparacion.SettingsActivity"
             android:label="设置/关于"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:exported="true"
             />
 

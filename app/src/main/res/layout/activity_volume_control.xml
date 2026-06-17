@@ -39,7 +39,7 @@
                     android:contentDescription="退出"
                     android:padding="11dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_go_back_2"/>
+                    android:src="@drawable/ic_general_back_square"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
