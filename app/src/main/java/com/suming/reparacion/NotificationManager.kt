@@ -414,6 +414,7 @@ class NotificationManager: AppCompatActivity() {
                                 x = 100.dp,
                                 y = 0.dp
                             ),
+                            containerColor = Color.Transparent,
                             modifier = Modifier.wrapContentSize().background(ColorPack.background)
                         ) {
                             Text(

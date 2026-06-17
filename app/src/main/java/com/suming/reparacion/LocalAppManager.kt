@@ -11,6 +11,12 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,10 +53,13 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.ripple
@@ -67,6 +76,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -78,6 +88,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.core.view.WindowInsetsControllerCompat
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppFragment
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppViewModel
@@ -304,6 +316,7 @@ class LocalAppManager: AppCompatActivity() {
 
 
     }
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnrememberedMutableState")
     @Composable
     fun AppListColumn(applicationList: List<AppInfo>, animatedTopPadding: Dp) {
@@ -317,7 +330,6 @@ class LocalAppManager: AppCompatActivity() {
             )
         }
         //点击菜单
-        var selectedUUID by remember { mutableStateOf<String?>(null) }
         var showMenu by remember { mutableStateOf(false) }
         //
         LazyColumn(
@@ -336,61 +348,95 @@ class LocalAppManager: AppCompatActivity() {
                     )
                     //显示选项菜单
                     if (selectedUUID == application.uniqueID) {
-                        DropdownMenu(
-                            expanded = true,
-                            onDismissRequest = { selectedUUID = null },
-                            offset = DpOffset(
-                                x = 100.dp,
-                                y = 0.dp
-                            ),
-                            modifier = Modifier.wrapContentSize().background(ColorPack.background)
-                        ) {
-                            Text(
-                                text = "ID $selectedUUID",
-                                fontSize = 10.sp,
-                                color = ColorPack.secondary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                            )
-                            Text(
-                                text = "包名 ${application.appPackageName}",
-                                fontSize = 10.sp,
-                                color = ColorPack.secondary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                            )
-                            Text(
-                                text = "内部字符 ${application.appNameChar}",
-                                fontSize = 10.sp,
-                                color = ColorPack.secondary,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                            )
-                            DropdownMenuItem(
-                                text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
-                                onClick = {
-
-                                    selectedUUID = null
+                        Menu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                            modifier = Modifier.wrapContentSize().background(Color.Transparent),
+                            content = {
+                                Column() {
+                                    Text(
+                                        text = "删除",
+                                        fontSize = 10.sp,
+                                        color = ColorPack.secondary,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                                    )
                                 }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
-                                onClick = {
-                                    //打开系统通知设置页面
-                                    openNotificationSetting(application.appPackageName)
-                                    //关闭菜单
-                                    selectedUUID = null
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
-                                onClick = {
-                                    //打开应用管理页面
-                                    openAppSettingPage(application.appPackageName)
-                                    //关闭菜单
-                                    selectedUUID = null
-                                }
-                            )
-                        }
+                            },
+                            application = application
+                        )
                     }
                 }
+            }
+        }
+    }
+    var selectedUUID by mutableStateOf<String?>(null)
+    @Composable
+    fun Menu(
+        expanded: Boolean,
+        onDismissRequest: () -> Unit,
+        modifier: Modifier = Modifier,
+        content: @Composable () -> Unit,
+        application: AppInfo
+    ) {
+        if (expanded) {
+            DropdownMenu(
+                expanded = true,
+                offset = DpOffset(
+                    x = 100.dp,
+                    y = 0.dp
+                ),
+                onDismissRequest = onDismissRequest,
+                shape = RoundedCornerShape(5.dp),
+                containerColor = Color.Transparent,
+                modifier = Modifier.background(ColorPack.onBackground)
+            ) {
+
+                    Column {
+                        Text(
+                            text = "ID $selectedUUID",
+                            fontSize = 10.sp,
+                            color = ColorPack.secondary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                        )
+                        Text(
+                            text = "包名 ${application.appPackageName}",
+                            fontSize = 10.sp,
+                            color = ColorPack.secondary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                        )
+                        Text(
+                            text = "内部字符 ${application.appNameChar}",
+                            fontSize = 10.sp,
+                            color = ColorPack.secondary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
+                            onClick = {
+
+                                selectedUUID = null
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
+                            onClick = {
+                                //打开系统通知设置页面
+                                openNotificationSetting(application.appPackageName)
+                                //关闭菜单
+                                selectedUUID = null
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
+                            onClick = {
+                                //打开应用管理页面
+                                openAppSettingPage(application.appPackageName)
+                                //关闭菜单
+                                selectedUUID = null
+                            }
+                        )
+                    }
+
             }
         }
     }
@@ -471,7 +517,7 @@ class LocalAppManager: AppCompatActivity() {
         secondary = Color(0xFF313131),
         //卡片底色
         background = Color(0xFFFFFFFF),
-
+        onBackground = Color(0xFFFFFFFF),
         )
     private val DarkColorScheme = darkColorScheme(
         //全局底色
@@ -481,6 +527,7 @@ class LocalAppManager: AppCompatActivity() {
         secondary = Color(0xFFF6F6F6),
         //卡片底色
         background = Color(0xFF121212),
+        onBackground = Color(0xFF212121),
     )
 
 
