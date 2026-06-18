@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -76,6 +77,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.ActivityComponents.MainViewModel
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.DataPack.ToolList
 import com.suming.reparacion.DataPack.ToolPackage
 import com.suming.reparacion.AddonTools.showCustomToast
@@ -86,7 +88,7 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     //连接到ViewModel
-    val mainViewModel = MainViewModel()
+    private val mainViewModel: MainViewModel by viewModels()
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -176,7 +178,10 @@ class MainActivity : AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircleButton(
-                            onClick = { exitApp() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@MainActivity)
+                                exitApp()
+                            },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -205,7 +210,10 @@ class MainActivity : AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircleButton(
-                            onClick = { startGuide() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@MainActivity)
+                                startGuide()
+                            },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -222,7 +230,10 @@ class MainActivity : AppCompatActivity() {
                             )
                         }
                         CircleButton(
-                            onClick = { startSetting() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@MainActivity)
+                                startSetting()
+                            },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -332,7 +343,10 @@ class MainActivity : AppCompatActivity() {
                 ToolCard(
                     name = tool.name,
                     description = tool.description,
-                    onClick = { onClickListItem(tool.intent) }
+                    onClick = {
+                        ToolVibrate().vibrate(this@MainActivity)
+                        onClickListItem(tool.intent)
+                    }
                 )
             }
         }

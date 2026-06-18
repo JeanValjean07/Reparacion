@@ -12,6 +12,8 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
+import androidx.cardview.widget.CardView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +66,7 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import com.suming.reparacion.AddonTools.ToolVibrate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -87,7 +90,7 @@ class SettingsActivity : AppCompatActivity() {
             ComposeRoot()
         }
 
-        //注册按钮点击事件
+        //注册
         register()
 
 
@@ -160,7 +163,9 @@ class SettingsActivity : AppCompatActivity() {
                     ) {
                         //返回按钮
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@SettingsActivity)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -309,7 +314,7 @@ class SettingsActivity : AppCompatActivity() {
             //读取版本
             val version = packageManager.getPackageInfo(packageName, 0).versionName
 
-
+            //更新UI
             withContext(Dispatchers.Main) {
                 //修改版本号显示
                 val versionText = findViewById<TextView>(R.id.version)
@@ -317,6 +322,7 @@ class SettingsActivity : AppCompatActivity() {
                 //SvgRepo
                 val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)
                 buttonGoSvgRepo.setOnClickListener {
+                    ToolVibrate().vibrate(this@SettingsActivity)
                     val url = "https://www.svgrepo.com/"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                     startActivity(intent)
@@ -324,6 +330,7 @@ class SettingsActivity : AppCompatActivity() {
                 //按钮：查看Github仓库
                 val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
                 ButtonGoGithub.setOnClickListener {
+                    ToolVibrate().vibrate(this@SettingsActivity)
                     val url = "https://github.com/JeanValjean07/HarmonyOS4_Reparacion/releases"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                     startActivity(intent)
@@ -331,6 +338,7 @@ class SettingsActivity : AppCompatActivity() {
                 //按钮：反馈问题
                 val ButtonReportIssue = findViewById<TextView>(R.id.buttonReportIssue)
                 ButtonReportIssue.setOnClickListener {
+                    ToolVibrate().vibrate(this@SettingsActivity)
                     val url = "https://space.bilibili.com/1206378184"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                     startActivity(intent)
@@ -339,18 +347,85 @@ class SettingsActivity : AppCompatActivity() {
                 val ButtonOpenSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
                 ButtonOpenSourceLicense.paint.isUnderlineText = true
                 ButtonOpenSourceLicense.setOnClickListener {
+                    ToolVibrate().vibrate(this@SettingsActivity)
                     startActivity(
                         Intent(this@SettingsActivity, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
                     )
                 }
+                //振动模式
+                val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)
+                updateVibrateModeText()
+                ButtonCardVibrateMode.setOnClickListener {
+                    ToolVibrate().vibrate(this@SettingsActivity)
+                    //使用弹出菜单选择
+                    val popup = PopupMenu(this@SettingsActivity, ButtonCardVibrateMode)
+                    popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_mode, popup.menu)
+                    popup.setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.item_NoVibrate -> {
+                                chooseVibrateMode(0); true
+                            }
+
+                            R.id.item_EFFECT_CLICK -> {
+                                chooseVibrateMode(1); true
+                            }
+
+                            R.id.item_EFFECT_TICK -> {
+                                chooseVibrateMode(2); true
+                            }
+
+                            R.id.item_EFFECT_DOUBLE_CLICK -> {
+                                chooseVibrateMode(3); true
+                            }
+
+                            R.id.item_EFFECT_HEAVY_CLICK -> {
+                                chooseVibrateMode(4); true
+                            }
+
+                            else -> true
+                        }
+                    }
+                    popup.show()
+                }
+
             }
 
         }
-
-
     }
 
 
+
+
+    //振动模式
+    private fun chooseVibrateMode(mode: Int) {
+        //振动模式表
+        // 0 = No Vibrate
+        // 1 = VibrationEffect.EFFECT_CLICK
+        // 2 = VibrationEffect.EFFECT_TICK
+        // 3 = VibrationEffect.EFFECT_DOUBLE_CLICK
+        // 4 = VibrationEffect.EFFECT_HEAVY_CLICK
+
+
+        ToolVibrate().setVibrateMode(this, mode)
+
+        ToolVibrate().vibrate(this)
+
+        updateVibrateModeText()
+
+    }
+    @SuppressLint("SetTextI18n")
+    private fun updateVibrateModeText() {
+        val ButtonTextVibrateMode = findViewById<TextView>(R.id.ButtonTextVibrateMode)
+        val vibrateMode = ToolVibrate().getVibrateMode(this)
+        when(vibrateMode){
+            0 -> ButtonTextVibrateMode.text = "无振动"
+            1 -> ButtonTextVibrateMode.text = "EFFECT_CLICK"
+            2 -> ButtonTextVibrateMode.text = "EFFECT_TICK"
+            3 -> ButtonTextVibrateMode.text = "EFFECT_DOUBLE_CLICK"
+            4 -> ButtonTextVibrateMode.text = "EFFECT_HEAVY_CLICK"
+        }
+
+    }
 
     //修改滚动区域顶部内边距
     private lateinit var ContentRoot: NestedScrollView

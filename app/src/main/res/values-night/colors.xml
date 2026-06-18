@@ -47,6 +47,7 @@
     <color name="ButtonCard_Text">#FAFAFA</color>
 
     <!-- 全新颜色体系 -->
-    <color name="ContentCard_Background">#151515</color>
+    <color name="ContentCard_Background">#FF151515</color>
+    <color name="ButtonCardOnCard_Background">#FF313131</color>
 
 </resources>

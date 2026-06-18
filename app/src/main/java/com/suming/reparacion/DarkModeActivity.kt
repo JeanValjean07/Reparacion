@@ -80,6 +80,7 @@ import androidx.core.graphics.scale
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.ActivityComponents.DarkMode.DarkModeFragment
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.DataPack.Descriptions
 import com.suming.reparacion.FunctionalPack.BitmapLoader
@@ -198,7 +199,9 @@ class DarkModeActivity: AppCompatActivity() {
                     ) {
                         //返回按钮
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@DarkModeActivity)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -230,7 +233,9 @@ class DarkModeActivity: AppCompatActivity() {
                     ) {
                         //设置按钮
                         CircleButton(
-                            onClick = { startSettingFragment() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@DarkModeActivity)
+                                startSettingFragment() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -413,6 +418,7 @@ class DarkModeActivity: AppCompatActivity() {
             //点击图标彩蛋
             val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
             DarkModeIcon.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 notice("哼,哼,啊啊啊啊啊啊啊")
             }
         }
@@ -425,9 +431,11 @@ class DarkModeActivity: AppCompatActivity() {
             imageViewDark = findViewById(R.id.imageDark)
             imageViewLight = findViewById(R.id.imageLight)
             imageViewDark?.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 showOptionMenu()
             }
             imageViewLight?.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 showOptionMenu()
             }
 
@@ -435,12 +443,14 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：选择/更改深色壁纸
             val ButtonSelectDarkWp = findViewById<TextView>(R.id.buttonChangeDark)
             ButtonSelectDarkWp.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 consoleLog("开始选择深色壁纸")
                 openGalleryToPick("dark")
             }
             //按钮：选择/更改浅色壁纸
             val ButtonSelectLightWp = findViewById<TextView>(R.id.buttonChangeLight)
             ButtonSelectLightWp.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 consoleLog("开始选择浅色壁纸")
                 openGalleryToPick("light")
             }
@@ -449,22 +459,25 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：返回桌面
             val ButtonSuperExit = findViewById<Button>(R.id.buttonSuperExit)
             ButtonSuperExit.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 moveTaskToBack(true)
-
             }
             //按钮：切换到深色壁纸
             ButtonSwitchDark = findViewById(R.id.buttonSwitchDark)
             ButtonSwitchDark?.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 switchNow("dark")
             }
             //按钮：切换到浅色壁纸
             ButtonSwitchLight = findViewById(R.id.buttonSwitchLight)
             ButtonSwitchLight?.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 switchNow("light")
             }
             //按钮：添加快捷方式
             val ButtonAddTile = findViewById<Button>(R.id.buttonAddTile)
             ButtonAddTile.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastClickMillis < CoolDownGap_createShortcut) {
                     return@setOnClickListener
@@ -478,6 +491,7 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：清除壁纸
             val ButtonClearWp = findViewById<Button>(R.id.buttonClear)
             ButtonClearWp.setOnClickListener {
+                ToolVibrate().vibrate(this@DarkModeActivity)
                 clearWallPaper()
                 notice("已清除")
             }

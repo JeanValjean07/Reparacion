@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.FunctionalPack.BitmapLoader
 import com.suming.reparacion.FunctionalPack.WallpaperSetor
@@ -61,6 +62,7 @@ class DarkModePure : AppCompatActivity() {
             }
             lifecycleScope.launch {
                 delay(1000)
+                ToolVibrate().vibrate(this@DarkModePure)
                 finish()
             }
 
@@ -83,6 +85,7 @@ class DarkModePure : AppCompatActivity() {
             //自动退出
             lifecycleScope.launch {
                 delay(1000)
+                ToolVibrate().vibrate(this@DarkModePure)
                 finish()
             }
         }else{

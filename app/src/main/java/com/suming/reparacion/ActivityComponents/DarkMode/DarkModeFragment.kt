@@ -84,6 +84,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.R
 import com.suming.reparacion.SettingsRequestCenter
@@ -248,7 +249,9 @@ class DarkModeFragment: DialogFragment() {
                     ) {
                         //关闭按钮
                         CircleButton(
-                            onClick = { dismiss() },
+                            onClick = {
+                                ToolVibrate().vibrate(requireContext())
+                                dismiss() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -409,6 +412,7 @@ class DarkModeFragment: DialogFragment() {
         CapsuleButton(
             text = "重新裁剪当前图片为微动尺寸",
             onClick = {
+                ToolVibrate().vibrate(requireContext())
                 reportFragment("FRAGMENT_INTENT_RECLIP")
             },
             modifier = Modifier.padding(start = 10.dp, top = 10.dp)
@@ -416,12 +420,12 @@ class DarkModeFragment: DialogFragment() {
         CapsuleButton(
             text = "重新导出当前壁纸",
             onClick = {
+                ToolVibrate().vibrate(requireContext())
                 reportFragment("FRAGMENT_INTENT_OUTPORT")
             },
             modifier = Modifier.padding(start = 10.dp, top = 5.dp)
         )
     }
-
     @Composable
     fun Settings(){
         //读取设置项
@@ -497,12 +501,12 @@ class DarkModeFragment: DialogFragment() {
                         Switch(
                             checked = flag_saveToExternal.value,
                             onCheckedChange = {
+                                ToolVibrate().vibrate(requireContext())
                                 SettingsRequestCenter.set_PREFS_Save_Clip_Out(it)
                                 updateLocalPrefRemember_flag_saveToExternal()
                             },
                             modifier = Modifier.padding(end = 10.dp)
                         )
-
                     }
                 }
             }
@@ -554,6 +558,7 @@ class DarkModeFragment: DialogFragment() {
                         Switch(
                             checked = flag_enableSlightMove.value,
                             onCheckedChange = {
+                                ToolVibrate().vibrate(requireContext())
                                 EnableSlightMove(it)
                                 updateLocalPrefRemember_flag_enableSlightMove()
                             },
@@ -589,6 +594,7 @@ class DarkModeFragment: DialogFragment() {
                         CapsuleButton(
                             text = "修改",
                             onClick = {
+                                ToolVibrate().vibrate(requireContext())
                                 startSetValue()
                             },
                             modifier = Modifier.padding(end = 10.dp)
@@ -644,6 +650,7 @@ class DarkModeFragment: DialogFragment() {
                         Switch(
                             checked = flag_endProcess.value,
                             onCheckedChange = {
+                                ToolVibrate().vibrate(requireContext())
                                 SettingsRequestCenter.set_PREFS_End_Process_After(it)
                                 updateLocalPrefRemember_flag_endProcess()
                             },

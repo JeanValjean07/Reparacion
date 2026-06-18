@@ -29,31 +29,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Divider
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.BurstMode
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SnippetFolder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
@@ -90,7 +81,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -98,10 +88,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.suming.reparacion.ActivityComponents.MainViewModel
 import com.suming.reparacion.ActivityComponents.WidgetManager.ConfigCenter
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
-import com.suming.reparacion.DataPack.ToolPackage
 
 class WidgetManager : AppCompatActivity() {
 
@@ -199,7 +188,9 @@ class WidgetManager : AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@WidgetManager)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -229,6 +220,7 @@ class WidgetManager : AppCompatActivity() {
                     ) {
                         CircleButton(
                             onClick = {
+                                ToolVibrate().vibrate(this@WidgetManager)
                                 showCustomToast("修改设置后，请点击一次桌面小组件以触发刷新")
                             },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
@@ -422,6 +414,7 @@ class WidgetManager : AppCompatActivity() {
                             //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
                             colors = CardDefaults.cardColors(ColorPack.tertiary),
                             onClick = {
+                                ToolVibrate().vibrate(this@WidgetManager)
                                 state_showColorConfigMenu.value = true
                             },
                         ){
@@ -448,6 +441,8 @@ class WidgetManager : AppCompatActivity() {
                                         onDismissRequest = {
                                             state_showColorConfigMenu.value = false
                                         },
+                                        shape = RoundedCornerShape(5.dp),
+                                        containerColor = Color.Transparent,
                                         modifier = Modifier.background(ColorPack.onBackground)
                                     ) {
                                         DropdownMenuItem(
@@ -554,6 +549,7 @@ class WidgetManager : AppCompatActivity() {
                                         //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
                                         colors = CardDefaults.cardColors(ColorPack.tertiary),
                                         onClick = {
+                                            ToolVibrate().vibrate(this@WidgetManager)
                                             state_showColorConFigType_1_ModeMenu.value = true
                                         },
                                     ){
@@ -580,6 +576,8 @@ class WidgetManager : AppCompatActivity() {
                                                     onDismissRequest = {
                                                         state_showColorConFigType_1_ModeMenu.value = false
                                                     },
+                                                    shape = RoundedCornerShape(5.dp),
+                                                    containerColor = Color.Transparent,
                                                     modifier = Modifier.background(ColorPack.onBackground)
                                                 ) {
                                                     DropdownMenuItem(
@@ -652,6 +650,8 @@ class WidgetManager : AppCompatActivity() {
                                     Switch(
                                         checked = flag_colorConFig_Type_1_Smooth.value,
                                         onCheckedChange = {
+                                            ToolVibrate().vibrate(this@WidgetManager)
+
                                             if(it){
                                                 ConfigCenter.EnableSmoothColor(this@WidgetManager)
                                             }else{
@@ -794,7 +794,9 @@ class WidgetManager : AppCompatActivity() {
                         shape = RoundedCornerShape(20.dp),
                         //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
                         colors = CardDefaults.cardColors(ColorPack.tertiary),
-                        onClick = { focusManager.clearFocus() },
+                        onClick = {
+                            ToolVibrate().vibrate(this@WidgetManager)
+                            focusManager.clearFocus() },
                     ){
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

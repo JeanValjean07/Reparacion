@@ -3,6 +3,7 @@ package com.suming.reparacion.ActivityComponents.LocalAppManager
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.suming.reparacion.DataPack.AppInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,8 +20,10 @@ class LocalAppViewModel : ViewModel() {
     //应用列表
     private val _list = MutableStateFlow(listOf<AppInfo>())
     val list: StateFlow<List<AppInfo>> = _list.asStateFlow()
-    //添加应用
-    fun add(appInfo: AppInfo) {
+
+
+    //添加到列表
+    fun addAppToList(appInfo: AppInfo) {
         val currentList = _list.value.toMutableList()
         //只判断包名,标题,内容是否相同
         val existingIndex = currentList.indexOfFirst {
@@ -44,15 +47,15 @@ class LocalAppViewModel : ViewModel() {
 
 
     //读取应用列表
-    private var coroutine_read_application: CoroutineScope = CoroutineScope(Dispatchers.IO)
     fun loadLocalAppList(context: Context){
-        coroutine_read_application.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             //读取应用列表
             getApplicationList(context)
         }
     }
 
-    fun getApplicationList(context: Context) {
+    //从appManager全量实时读取
+    private fun getApplicationList(context: Context) {
         val packageManager = context.packageManager
         val packageInfo = packageManager.getInstalledPackages(0)
         val appList = mutableListOf<AppInfo>()
@@ -79,7 +82,9 @@ class LocalAppViewModel : ViewModel() {
 
 
 
-    //统一日志控制
+
+
+    //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", msg)

@@ -87,6 +87,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerDelay
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerFragment
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerRepo
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.DataPack.NotificationPack
 
@@ -199,7 +200,9 @@ class NotificationManager: AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@NotificationManager)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -215,7 +218,6 @@ class NotificationManager: AppCompatActivity() {
                                 tint = ColorPack.secondary
                             )
                         }
-
                         Text(
                             text = "通知管理",
                             fontSize = 20.sp,
@@ -230,7 +232,9 @@ class NotificationManager: AppCompatActivity() {
                     ) {
                         //设置按钮
                         CircleButton(
-                            onClick = { startSettingFragment() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@NotificationManager)
+                                startSettingFragment() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -403,7 +407,9 @@ class NotificationManager: AppCompatActivity() {
                         packageName = notice.packageName,
                         title = notice.title,
                         text = notice.text,
-                        onClick = { selectedUUID = notice.uniqueID; showMenu = true }
+                        onClick = {
+                            ToolVibrate().vibrate(this@NotificationManager)
+                            selectedUUID = notice.uniqueID; showMenu = true }
                     )
                     //显示选项菜单
                     if (selectedUUID == notice.uniqueID) {
@@ -432,6 +438,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
 
                                     selectedUUID = null
                                 }
@@ -439,6 +446,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
                                     //打开系统通知设置页面
                                     openNotificationSetting(notice.packageName)
                                     //关闭菜单
@@ -448,6 +456,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
                                     //打开应用管理页面
                                     openAppSettingPage(notice.packageName)
                                     //关闭菜单
@@ -457,6 +466,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "隐藏", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
                                     //隐藏通知
                                     snoozeNotificationByKey(notice.key, notice.isOngoing)
                                     //关闭菜单
@@ -466,6 +476,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "延后", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
                                     //延后通知
                                     startDelayFragment(notice.key,notice.packageName)
                                     //关闭菜单
@@ -475,6 +486,7 @@ class NotificationManager: AppCompatActivity() {
                             DropdownMenuItem(
                                 text = { Text(text = "不再收集该通知", fontSize = 12.sp, color = ColorPack.primary) },
                                 onClick = {
+                                    ToolVibrate().vibrate(this@NotificationManager)
 
                                     //关闭菜单
                                     selectedUUID = null
@@ -549,7 +561,6 @@ class NotificationManager: AppCompatActivity() {
                 )
                 .background(ColorPack.surface)
         ){
-
             when(showErrorCoverMark){
                 //权限未开启
                 "NOTIFICATION_ERROR_PERMISSION" -> {
@@ -564,7 +575,6 @@ class NotificationManager: AppCompatActivity() {
                     ErrorCoverZeroNotice()
                 }
             }
-
         }
     }
     @Composable
@@ -586,14 +596,18 @@ class NotificationManager: AppCompatActivity() {
             //开启权限按钮
             CapsuleButton(
                 text = "去开启权限",
-                onClick = { goEnablePermission() }
+                onClick = {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                    goEnablePermission() }
             )
             //按钮间距
             Spacer(modifier = Modifier.height(5.dp))
             //刷新权限状态按钮
             CapsuleButton(
                 text = "刷新权限状态",
-                onClick = { checkPermission() }
+                onClick = {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                    checkPermission() }
             )
         }
     }
@@ -616,21 +630,27 @@ class NotificationManager: AppCompatActivity() {
             //待会儿再来按钮(退出当前页面)
             CapsuleButton(
                 text = "待会儿再来看看",
-                onClick = { finish() }
+                onClick = {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                    finish() }
             )
             //按钮间距
             Spacer(modifier = Modifier.height(5.dp))
             //再收集一次
             CapsuleButton(
                 text = "再收集一次",
-                onClick = { getCurrentNotifications() }
+                onClick = {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                    getCurrentNotifications() }
             )
             //按钮间距
             Spacer(modifier = Modifier.height(5.dp))
             //发一条试试按钮
             CapsuleButton(
                 text = "发一条试试",
-                onClick =  { sendTestNotification() }
+                onClick =  {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                    sendTestNotification() }
             )
         }
     }
@@ -660,7 +680,9 @@ class NotificationManager: AppCompatActivity() {
             //再等等按钮
             CapsuleButton(
                 text = "再等等",
-                onClick = {  }
+                onClick = {
+                    ToolVibrate().vibrate(this@NotificationManager)
+                }
             )
         }
     }

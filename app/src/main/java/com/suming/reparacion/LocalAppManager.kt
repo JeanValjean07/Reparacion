@@ -10,13 +10,8 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,8 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -53,13 +46,10 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.ripple
@@ -76,7 +66,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -88,18 +77,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.core.view.WindowInsetsControllerCompat
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppFragment
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppViewModel
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerRepo
+import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.DataPack.AppInfo
 
 class LocalAppManager: AppCompatActivity() {
 
     //连接到LocalAppViewModel
-    private val localAppViewModel = LocalAppViewModel()
+    private val localAppViewModel: LocalAppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,8 +98,11 @@ class LocalAppManager: AppCompatActivity() {
         //手动设置状态栏字体颜色
         setStatusBarFontColor()
 
+        consoleLog("LocalAppManager onCreate：${savedInstanceState}")
         //启动读取
-        localAppViewModel.loadLocalAppList(this)
+        if (savedInstanceState == null){
+            localAppViewModel.loadLocalAppList(this)
+        }
 
         //托管给ComposableRoot
         setContent {
@@ -193,7 +184,9 @@ class LocalAppManager: AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@LocalAppManager)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -223,7 +216,9 @@ class LocalAppManager: AppCompatActivity() {
                     ) {
                         //设置按钮
                         CircleButton(
-                            onClick = { startSettingFragment() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@LocalAppManager)
+                                startSettingFragment() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -344,14 +339,15 @@ class LocalAppManager: AppCompatActivity() {
                     AppCard(
                         packageName = application.appPackageName,
                         appName = application.appName,
-                        onClick = { selectedUUID = application.uniqueID; showMenu = true }
+                        onClick = {
+                            ToolVibrate().vibrate(this@LocalAppManager)
+                            selectedUUID = application.uniqueID; showMenu = true }
                     )
                     //显示选项菜单
                     if (selectedUUID == application.uniqueID) {
                         Menu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
-                            modifier = Modifier.wrapContentSize().background(Color.Transparent),
                             content = {
                                 Column() {
                                     Text(
@@ -371,13 +367,10 @@ class LocalAppManager: AppCompatActivity() {
     }
     var selectedUUID by mutableStateOf<String?>(null)
     @Composable
-    fun Menu(
-        expanded: Boolean,
+    fun Menu( expanded: Boolean,
         onDismissRequest: () -> Unit,
-        modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
-        application: AppInfo
-    ) {
+        application: AppInfo ) {
         if (expanded) {
             DropdownMenu(
                 expanded = true,
@@ -390,53 +383,54 @@ class LocalAppManager: AppCompatActivity() {
                 containerColor = Color.Transparent,
                 modifier = Modifier.background(ColorPack.onBackground)
             ) {
+                Column {
+                    Text(
+                        text = "ID $selectedUUID",
+                        fontSize = 10.sp,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                    )
+                    Text(
+                        text = "包名 ${application.appPackageName}",
+                        fontSize = 10.sp,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                    )
+                    Text(
+                        text = "内部字符 ${application.appNameChar}",
+                        fontSize = 10.sp,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
+                        onClick = {
+                            ToolVibrate().vibrate(this@LocalAppManager)
 
-                    Column {
-                        Text(
-                            text = "ID $selectedUUID",
-                            fontSize = 10.sp,
-                            color = ColorPack.secondary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                        )
-                        Text(
-                            text = "包名 ${application.appPackageName}",
-                            fontSize = 10.sp,
-                            color = ColorPack.secondary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                        )
-                        Text(
-                            text = "内部字符 ${application.appNameChar}",
-                            fontSize = 10.sp,
-                            color = ColorPack.secondary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
-                            onClick = {
-
-                                selectedUUID = null
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
-                            onClick = {
-                                //打开系统通知设置页面
-                                openNotificationSetting(application.appPackageName)
-                                //关闭菜单
-                                selectedUUID = null
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
-                            onClick = {
-                                //打开应用管理页面
-                                openAppSettingPage(application.appPackageName)
-                                //关闭菜单
-                                selectedUUID = null
-                            }
-                        )
-                    }
-
+                            selectedUUID = null
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
+                        onClick = {
+                            ToolVibrate().vibrate(this@LocalAppManager)
+                            //打开系统通知设置页面
+                            openNotificationSetting(application.appPackageName)
+                            //关闭菜单
+                            selectedUUID = null
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
+                        onClick = {
+                            ToolVibrate().vibrate(this@LocalAppManager)
+                            //打开应用管理页面
+                            openAppSettingPage(application.appPackageName)
+                            //关闭菜单
+                            selectedUUID = null
+                        }
+                    )
+                }
             }
         }
     }

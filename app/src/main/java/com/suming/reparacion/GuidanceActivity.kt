@@ -65,6 +65,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import com.suming.reparacion.AddonTools.ToolVibrate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -164,7 +165,9 @@ class GuidanceActivity : AppCompatActivity() {
                     ) {
                         //返回按钮
                         CircleButton(
-                            onClick = { finish() },
+                            onClick = {
+                                ToolVibrate().vibrate(this@GuidanceActivity)
+                                finish() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
                             border = BorderStroke(
@@ -316,6 +319,7 @@ class GuidanceActivity : AppCompatActivity() {
                 //按钮：反馈问题
                 val ButtonReportIssue = findViewById<TextView>(R.id.buttonReportIssue)
                 ButtonReportIssue.setOnClickListener {
+                    ToolVibrate().vibrate(this@GuidanceActivity)
                     val url = "https://space.bilibili.com/1206378184"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                     startActivity(intent)
