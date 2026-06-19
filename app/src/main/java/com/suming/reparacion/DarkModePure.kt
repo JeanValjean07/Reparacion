@@ -39,6 +39,7 @@ class DarkModePure : AppCompatActivity() {
         //错误提示:点击跳转至壁纸设置页
         val noticeCard = findViewById<CardView>(R.id.noticeCard)
         noticeCard.setOnClickListener {
+            ToolVibrate().vibrate(this@DarkModePure)
             val intent = Intent(this, DarkModeActivity::class.java)
             startActivity(intent)
         }
@@ -67,6 +68,7 @@ class DarkModePure : AppCompatActivity() {
             }
 
         }else{
+            ToolVibrate().vibrate(this@DarkModePure)
             notice("您没有设置完全部两张壁纸,请先设置")
             val switching = findViewById<TextView>(R.id.switching)
             switching.text="无法切换"
@@ -89,6 +91,7 @@ class DarkModePure : AppCompatActivity() {
                 finish()
             }
         }else{
+            ToolVibrate().vibrate(this@DarkModePure)
             notice("您没有设置完全部两张壁纸,切换失败")
             val switching = findViewById<TextView>(R.id.switching)
             switching.text="无法切换"

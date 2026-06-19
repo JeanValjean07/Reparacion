@@ -112,7 +112,7 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
             <meta-data
-                android:resource="@xml/my_tile"
+                android:resource="@xml/tile_dark_paper"
                 android:name="huawei.theme.accent_support"
                 android:value="true" />
         </service>
@@ -126,7 +126,7 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
             <meta-data
-                android:resource="@xml/my_tile"
+                android:resource="@xml/tile_dark_paper"
                 android:name="huawei.theme.accent_support"
                 android:value="true" />
         </service>
@@ -154,6 +154,16 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info_clock" />
+        </receiver>
+        <!-- Widget - Desk Clock Column -->
+        <receiver android:name="com.suming.reparacion.ActivityComponents.WidgetManager.ClockColumnWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_clock_column" />
         </receiver>
 
         <!-- 开放源代码许可(谷歌OSS) -->

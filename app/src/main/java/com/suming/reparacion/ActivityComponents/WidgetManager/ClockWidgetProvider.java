@@ -14,7 +14,7 @@ import android.widget.RemoteViews;
 import com.suming.reparacion.R;
 import com.suming.reparacion.SettingsRequestCenter;
 
-//传统组件就要用传统语言😡
+
 public class ClockWidgetProvider extends AppWidgetProvider {
 
 
@@ -107,7 +107,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
 
     //日志
-    static final boolean LOG_ENABLE = false;
+    static final boolean LOG_ENABLE = true;
     static void consoleLog(String msg) {
         if (LOG_ENABLE) {
             Log.d("SuMing", msg);

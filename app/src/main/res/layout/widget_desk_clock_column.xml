@@ -13,29 +13,37 @@
 
     <!-- 时间 -->
     <TextClock
-        android:id="@+id/widget_time"
+        android:id="@+id/widget_time_hour"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:format12Hour="h:mm"
-        android:format24Hour="HH:mm"
-        android:textSize="85sp"
+        android:format12Hour="hh"
+        android:format24Hour="HH"
+        android:includeFontPadding="false"
         android:textColor="#FF313131"
         android:textFontWeight="500"
-        android:includeFontPadding="false"
-        app:layout_constraintTop_toTopOf="parent"
+        android:textSize="85sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <TextClock
+        android:id="@+id/widget_time_minute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="-10dp"
-        android:clickable="false"
-        >
+        android:layout_marginTop="-20dp"
+        android:format12Hour="mm"
+        android:format24Hour="mm"
+        android:includeFontPadding="false"
+        android:textColor="#FF313131"
+        android:textFontWeight="500"
+        android:textSize="85sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
 
         <!-- 文本区 -->
         <TextView
@@ -43,7 +51,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="哎呀骇亖我力"
+            android:layout_marginTop="-10dp"
             android:textSize="14sp"
+            android:textStyle="bold"
             android:textColor="#FF313131"
             android:clickable="false"
             tools:ignore="HardcodedText" />
@@ -57,13 +67,11 @@
             android:format12Hour="MM月dd日 E"
             android:format24Hour="MM月dd日 E"
             android:textSize="14sp"
+            android:textStyle="bold"
             android:textColor="#FF313131"
-            android:layout_marginStart="10dp"
             android:clickable="false"
             />
 
-
-    </LinearLayout>
 
 
 </LinearLayout>
