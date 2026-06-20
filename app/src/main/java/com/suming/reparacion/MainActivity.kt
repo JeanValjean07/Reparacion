@@ -120,7 +120,7 @@ class MainActivity : AppCompatActivity() {
 
             //顶部栏高度值
             val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-            var topBarHeight by remember { mutableIntStateOf(300) }
+            var topBarHeight by remember { mutableIntStateOf(500) }
             val topPaddingDp = with(LocalDensity.current) {
                 (statusBarHeight + topBarHeight).toDp()
             }
@@ -334,11 +334,13 @@ class MainActivity : AppCompatActivity() {
                 end = 0.dp
             )
         }
+        //
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
+            //item { Spacer(modifier = Modifier.height(100.dp)) }
             items(toolsList) { tool ->
                 ToolCard(
                     name = tool.name,

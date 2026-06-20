@@ -138,6 +138,10 @@ class DarkModeActivity: AppCompatActivity() {
 
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        collectJob?.cancel()
+    }
 
 
     //Composable Functions
@@ -927,8 +931,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //设置系统壁纸核心方法
     private fun applySystemWallpaper(bitmap: Bitmap){
-        val wallpaperSetor = WallpaperSetor()
-        wallpaperSetor.applySystemWallpaper(bitmap, this)
+        WallpaperSetor.applySystemWallpaper(bitmap, this)
     }
     //重新裁剪微动版本
     private fun reClipCropImage(){
@@ -1019,21 +1022,38 @@ class DarkModeActivity: AppCompatActivity() {
 
     //功能执行函数
     //倒计时后退出到桌面
+    private var collectJob: Job? = null
     private fun autoFinish(){
         //先退回桌面
         lifecycleScope.launch(Dispatchers.IO){
-            delay(2000)
-            moveTaskToBack(true)
-            //结束进程
-            if(SettingsRequestCenter.get_PREFS_End_Process_After(this@DarkModeActivity)){
-                val pid = Process.myPid()
-                Process.killProcess(pid)
+            collectJob?.cancel()
+            collectJob = lifecycleScope.launch {
+                WallpaperSetor.state.collect{
+                    if(it == WallpaperSetor.state_command_success){
+                        //显示设置成功消息
+                        withContext(Dispatchers.Main){
+                            setButtonInfo(current_setting_mode,"设置成功，即将自动返回桌面",true)
+                        }
+                        //附加一段额外延时,确保系统桌面处理完毕
+                        delay(2000)
+                        ToolVibrate().vibrate(this@DarkModeActivity)
+                        moveTaskToBack(true)
+                        resetButtonInfo()
+                        //结束进程
+                        if(SettingsRequestCenter.get_PREFS_End_Process_After(this@DarkModeActivity)){
+                            val pid = Process.myPid()
+                            Process.killProcess(pid)
+                        }
+                    }
+                }
             }
+
         }
     }
     //立即切换到指定模式壁纸
     private var ButtonSwitchDark: Button? = null
     private fun switchNowToDark(){
+        current_setting_mode = "dark"
         lifecycleScope.launch(Dispatchers.IO){
             //先确认有没有图,修改按钮提示文字
             if (SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)) {
@@ -1072,6 +1092,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     private var ButtonSwitchLight: Button? = null
     private fun switchNowToLight(){
+        current_setting_mode = "light"
         lifecycleScope.launch(Dispatchers.IO){
             //先确认有没有图,修改按钮提示文字
             if (SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)) {
@@ -1108,6 +1129,7 @@ class DarkModeActivity: AppCompatActivity() {
             }
         }
     }
+    private var current_setting_mode = ""
     //立即切换到指定模式壁纸入口
     private fun switchNow(mode: String) {
         //锁
@@ -1131,7 +1153,6 @@ class DarkModeActivity: AppCompatActivity() {
         state_paper_apply_running = true
         actionGapJob = lifecycleScope.launch {
             delay(3000)
-            resetButtonInfo()
             state_paper_apply_running = false
         }
     }
@@ -1150,6 +1171,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //重置按钮
     private fun resetButtonInfo(){
+        consoleLog("resetButtonInfo")
         //切换文字
         ButtonSwitchDark?.text = getString(R.string.dark_mode_paper_apply_notice_dark)
         ButtonSwitchLight?.text = getString(R.string.dark_mode_paper_apply_notice_light)
@@ -1159,6 +1181,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //设置按钮
     private fun setButtonInfo(target: String,text:String,highlight: Boolean = false){
+        consoleLog("setButtonInfo $target $text $highlight")
         //切换文字
         when(target){
             "dark" -> {
