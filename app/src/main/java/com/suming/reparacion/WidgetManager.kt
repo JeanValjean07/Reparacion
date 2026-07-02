@@ -52,6 +52,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -64,9 +65,11 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,6 +94,7 @@ import androidx.core.view.WindowCompat
 import com.suming.reparacion.ActivityComponents.WidgetManager.ConfigCenter
 import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
+import kotlin.math.roundToInt
 
 class WidgetManager : AppCompatActivity() {
 
@@ -324,6 +328,8 @@ class WidgetManager : AppCompatActivity() {
             TextColorConfigCard()
             //文本配置卡片
             TextCustomAreaCard()
+            //文字大小,字重自定义
+            TextConfigCard()
         }
     }
     @Composable
@@ -818,6 +824,236 @@ class WidgetManager : AppCompatActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+    @Composable
+    fun TextConfigCard(){
+        //字体大小
+        var textSize by remember { mutableIntStateOf(85) }
+        var textSizeSecondary by remember { mutableIntStateOf(15) }
+        //字重
+        var textFontWeight by remember { mutableStateOf(FontWeight.Normal) }
+        val fontWeightOptions = listOf(
+            FontWeight.Thin,      // 0
+            FontWeight.Light,     // 1
+            FontWeight.Normal,    // 2
+            FontWeight.Medium,    // 3
+            FontWeight.Bold,      // 4
+            FontWeight.Black      // 5
+        )
+        var sliderPosition by rememberSaveable { mutableFloatStateOf(2f) }
+        var selectedIndex = sliderPosition.roundToInt()
+        val selectedFontWeightText = when(selectedIndex){
+            0 -> "FontWeight.Thin"
+            1 -> "FontWeight.Light"
+            2 -> "FontWeight.Normal"
+            3 -> "FontWeight.Medium"
+            4 -> "FontWeight.Bold"
+            5 -> "FontWeight.Black"
+            else -> "错误"
+        }
+
+        //读取
+        LaunchedEffect(Unit) {
+            textSize = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size(this@WidgetManager)
+            textSizeSecondary = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size_Secondary(this@WidgetManager)
+            selectedIndex = SettingsRequestCenter.get_PREFS_Widget_General_Text_Weight_Index(this@WidgetManager)
+            sliderPosition = selectedIndex.toFloat()
+        }
+
+
+        //Compose
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+                .uniformShadow()
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .background(Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
+            border = BorderStroke(
+                width = 0.5.dp,
+                color = Color.Gray.copy(alpha = 0.1f)
+            ),
+            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
+        ){
+            Column(
+                modifier = Modifier.fillMaxWidth().wrapContentHeight()
+            ){
+                //主要字体大小
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column (
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "主要字体大小",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ColorPack.primary,
+                            modifier = Modifier.padding(start = 0.dp)
+                        )
+                        Spacer(modifier = Modifier.padding(top = 5.dp))
+                        Text(
+                            text = "调整时钟等主要区域的字体大小",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = ColorPack.secondary,
+                        )
+                    }
+                    Text(
+                        text = "$textSize SP",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(end = 10.dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp, end = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Slider(
+                            value = textSize.toFloat(),
+                            onValueChange = { textSize = it.toInt() },
+                            valueRange = 30f..160f,
+                            onValueChangeFinished = {
+                                SettingsRequestCenter.set_PREFS_Widget_General_Text_Size(this@WidgetManager, textSize)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                //次级字体大小
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column (
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "次级字体大小",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ColorPack.primary,
+                            modifier = Modifier.padding(start = 0.dp)
+                        )
+                        Spacer(modifier = Modifier.padding(top = 5.dp))
+                        Text(
+                            text = "调整日期和自定文本等次级区域的字体大小",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = ColorPack.secondary,
+                        )
+                    }
+                    Text(
+                        text = "$textSizeSecondary SP",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(end = 10.dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp, end = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Slider(
+                            value = textSizeSecondary.toFloat(),
+                            onValueChange = { textSizeSecondary = it.toInt() },
+                            valueRange = 10f..50f,
+                            onValueChangeFinished = {
+                                SettingsRequestCenter.set_PREFS_Widget_General_Text_Size_Secondary(this@WidgetManager, textSizeSecondary)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                //字重
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column (
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "字重",
+                            fontSize = 15.sp,
+                            fontWeight = textFontWeight,
+                            color = ColorPack.primary,
+                            modifier = Modifier.padding(start = 0.dp)
+                        )
+                        Spacer(modifier = Modifier.padding(top = 5.dp))
+                        Text(
+                            text = "调整字体粗细",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = ColorPack.secondary,
+                        )
+                    }
+                    Text(
+                        text = selectedFontWeightText,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = ColorPack.secondary,
+                        modifier = Modifier.padding(end = 10.dp)
+                    )
+                }
+
+                //字重滑块
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.wrapContentHeight().padding(start = 10.dp, end = 10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Slider(
+                            value = sliderPosition,
+                            onValueChange = { newValue ->
+                                //计算索引
+                                selectedIndex = newValue.roundToInt()
+
+
+                                sliderPosition = newValue
+                            },
+                            valueRange = 0f..(fontWeightOptions.lastIndex).toFloat(),
+                            steps = fontWeightOptions.size - 2,
+                            onValueChangeFinished = {
+                                SettingsRequestCenter.set_PREFS_Widget_General_Text_Weight_Index(this@WidgetManager, selectedIndex)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
             }
         }
     }

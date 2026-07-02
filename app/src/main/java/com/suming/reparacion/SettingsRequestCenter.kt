@@ -261,7 +261,12 @@ object SettingsRequestCenter {
 
     //设置清单-小组件---------------------------------------------------
     private var PREFS_Widget: SharedPreferences? = null
-
+    const val PREFS_Widget_Name = "PREFS_Widget_Name"
+    private fun initPREFS_Widget(context: Context){
+        if(PREFS_Widget == null){
+            PREFS_Widget = context.getSharedPreferences(PREFS_Widget_Name, 0)
+        }
+    }
     //设置项：字体颜色配置
     private var PREFS_Color_Config = 0
     fun set_PREFS_Color_Config(context: Context,config: Int){
@@ -370,6 +375,90 @@ object SettingsRequestCenter {
             PREFS_Widget?.getString("PREFS_Color_Config_Custom_Text", "") ?: ""
 
         return PREFS_Color_Config_Custom_Text
+    }
+
+    //字体大小(sp直接单位数值)
+    private var PREFS_Widget_General_Text_Size = -1
+    const val PREFS_Widget_General_Text_Size_Name = "PREFS_Widget_General_Text_Size_Name"
+    fun set_PREFS_Widget_General_Text_Size(context: Context,size: Int){
+        initPREFS_Widget(context)
+
+        PREFS_Widget_General_Text_Size = size
+        PREFS_Widget?.edit { putInt(PREFS_Widget_General_Text_Size_Name, size) }
+    }
+    @JvmStatic
+    fun get_PREFS_Widget_General_Text_Size(context: Context): Int {
+        initPREFS_Widget(context)
+
+
+        if (PREFS_Widget_General_Text_Size == -1) {
+            PREFS_Widget_General_Text_Size =
+                PREFS_Widget?.getInt(PREFS_Widget_General_Text_Size_Name, -1) ?: -1
+
+            if (PREFS_Widget_General_Text_Size == -1) {
+                set_PREFS_Widget_General_Text_Size(context, 85)
+            }
+
+
+        }
+
+
+        return PREFS_Widget_General_Text_Size
+    }
+    //字体大小二级(sp直接单位数值)
+    private var PREFS_Widget_General_Text_Size_Secondary = -1
+    const val PREFS_Widget_General_Text_Size_Secondary_Name = "PREFS_Widget_General_Text_Size_Secondary_Name"
+    fun set_PREFS_Widget_General_Text_Size_Secondary(context: Context,size: Int){
+        initPREFS_Widget(context)
+
+        PREFS_Widget_General_Text_Size_Secondary = size
+        PREFS_Widget?.edit { putInt(PREFS_Widget_General_Text_Size_Secondary_Name, size) }
+    }
+    @JvmStatic
+    fun get_PREFS_Widget_General_Text_Size_Secondary(context: Context): Int {
+        initPREFS_Widget(context)
+
+
+
+        if (PREFS_Widget_General_Text_Size_Secondary == -1) {
+            PREFS_Widget_General_Text_Size_Secondary =
+                PREFS_Widget?.getInt(PREFS_Widget_General_Text_Size_Secondary_Name, -1) ?: -1
+
+            if (PREFS_Widget_General_Text_Size_Secondary == -1) {
+                set_PREFS_Widget_General_Text_Size_Secondary(context, 15)
+            }
+
+
+        }
+
+
+        return PREFS_Widget_General_Text_Size_Secondary
+    }
+
+
+    //字体字重(索引)
+    private var PREFS_Widget_General_Text_Weight_Index = -1
+    const val PREFS_Widget_General_Text_Weight_Index_Name = "PREFS_Widget_General_Text_Weight_Index_Name"
+    fun set_PREFS_Widget_General_Text_Weight_Index(context: Context,index: Int){
+        initPREFS_Widget(context)
+
+        PREFS_Widget_General_Text_Weight_Index = index
+        PREFS_Widget?.edit { putInt(PREFS_Widget_General_Text_Weight_Index_Name, index) }
+    }
+    @JvmStatic
+    fun get_PREFS_Widget_General_Text_Weight_Index(context: Context): Int {
+        initPREFS_Widget(context)
+
+        if (PREFS_Widget_General_Text_Weight_Index == -1) {
+            PREFS_Widget_General_Text_Weight_Index =
+                PREFS_Widget?.getInt(PREFS_Widget_General_Text_Weight_Index_Name, -1) ?: -1
+
+            if (PREFS_Widget_General_Text_Weight_Index == -1) {
+                set_PREFS_Widget_General_Text_Weight_Index(context, 4)
+            }
+        }
+
+        return PREFS_Widget_General_Text_Weight_Index
     }
 
 }

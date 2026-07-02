@@ -7,12 +7,20 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.widget.RemoteViews;
+import android.widget.TextView;
+
+import androidx.compose.ui.text.font.FontWeight;
 
 import com.suming.reparacion.R;
 import com.suming.reparacion.SettingsRequestCenter;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 public class ClockWidgetProvider extends AppWidgetProvider {
@@ -93,6 +101,15 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         String customText = SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text(context);
         views.setTextViewText(R.id.widget_custom_text, customText);
 
+
+        //应用字体大小
+        int fontSize = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size(context);
+        int fontSizeSecondary = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size_Secondary(context);
+        views.setTextViewTextSize(R.id.widget_time, TypedValue.COMPLEX_UNIT_SP, fontSize);
+        views.setTextViewTextSize(R.id.widget_date, TypedValue.COMPLEX_UNIT_SP, fontSizeSecondary);
+        views.setTextViewTextSize(R.id.widget_custom_text, TypedValue.COMPLEX_UNIT_SP, fontSizeSecondary);
+
+
         //应用空点击事件到全部
         views.setOnClickPendingIntent(R.id.widget_root, pendingIntent_no_action);
         views.setOnClickPendingIntent(R.id.widget_time, pendingIntent_no_action);
@@ -107,7 +124,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
 
     //日志
-    static final boolean LOG_ENABLE = true;
+    static final boolean LOG_ENABLE = false;
     static void consoleLog(String msg) {
         if (LOG_ENABLE) {
             Log.d("SuMing", msg);

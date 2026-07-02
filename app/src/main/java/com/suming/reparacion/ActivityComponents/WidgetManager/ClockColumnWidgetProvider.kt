@@ -9,11 +9,12 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.widget.RemoteViews
-import com.suming.reparacion.SettingsRequestCenter.get_PREFS_Color_Config_Actual
-import com.suming.reparacion.SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text
 import androidx.core.graphics.toColorInt
 import com.suming.reparacion.R
+import com.suming.reparacion.SettingsRequestCenter
+
 
 class ClockColumnWidgetProvider : AppWidgetProvider() {
 
@@ -89,11 +90,11 @@ class ClockColumnWidgetProvider : AppWidgetProvider() {
         //获取颜色
         var actualColor = Color.WHITE
         try {
-            val colorString = get_PREFS_Color_Config_Actual(context)
+            val colorString = SettingsRequestCenter.get_PREFS_Color_Config_Actual(context)
             consoleLog("ClockColumnWidgetProvider: updateWidget: 获取当前colorString为: $colorString")
             actualColor = ("#$colorString").toColorInt()
         } catch (_: Exception) {
-            val colorString = get_PREFS_Color_Config_Actual(context)
+            val colorString = SettingsRequestCenter.get_PREFS_Color_Config_Actual(context)
             consoleLog("ClockColumnWidgetProvider: updateWidget: 获取到actualColor时发生严重错误, 无法转换该颜色")
         }
         //应用颜色到全部
@@ -102,8 +103,18 @@ class ClockColumnWidgetProvider : AppWidgetProvider() {
         views.setTextColor(R.id.widget_date, actualColor)
         views.setTextColor(R.id.widget_custom_text, actualColor)
 
+
+        //应用字体大小
+        val fontSize = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size(context)
+        val fontSizeSecondary = SettingsRequestCenter.get_PREFS_Widget_General_Text_Size_Secondary(context)
+        views.setTextViewTextSize(R.id.widget_time_hour, TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat())
+        views.setTextViewTextSize(R.id.widget_time_minute, TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat())
+        views.setTextViewTextSize(R.id.widget_date, TypedValue.COMPLEX_UNIT_SP, fontSizeSecondary.toFloat())
+        views.setTextViewTextSize(R.id.widget_custom_text, TypedValue.COMPLEX_UNIT_SP, fontSizeSecondary.toFloat())
+
+
         //应用自定义文本
-        val customText = get_PREFS_Color_Config_Custom_Text(context)
+        val customText = SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text(context)
         views.setTextViewText(R.id.widget_custom_text, customText)
 
         //应用空点击事件到全部

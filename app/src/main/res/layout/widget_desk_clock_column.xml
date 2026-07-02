@@ -45,18 +45,7 @@
 
 
 
-        <!-- 文本区 -->
-        <TextView
-            android:id="@+id/widget_custom_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="哎呀骇亖我力"
-            android:layout_marginTop="-10dp"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="#FF313131"
-            android:clickable="false"
-            tools:ignore="HardcodedText" />
+
 
 
         <!-- 日期 -->
@@ -64,13 +53,27 @@
             android:id="@+id/widget_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:format12Hour="MM月dd日 E"
-            android:format24Hour="MM月dd日 E"
-            android:textSize="14sp"
+            android:layout_marginTop="-10dp"
+            android:format12Hour="M月d日 E"
+            android:format24Hour="M月d日 E"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#FF313131"
             android:clickable="false"
             />
+
+    <!-- 文本区 -->
+    <TextView
+        android:id="@+id/widget_custom_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="哎呀骇亖我力"
+        android:layout_marginTop="-0dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FF313131"
+        android:clickable="false"
+        tools:ignore="HardcodedText" />
 
 
 

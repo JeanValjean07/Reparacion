@@ -66,7 +66,6 @@ class DarkModePure : AppCompatActivity() {
                 ToolVibrate().vibrate(this@DarkModePure)
                 finish()
             }
-
         }else{
             ToolVibrate().vibrate(this@DarkModePure)
             notice("您没有设置完全部两张壁纸,请先设置")
