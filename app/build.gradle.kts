@@ -15,10 +15,11 @@ android {
 
     defaultConfig {
         applicationId = "com.suming.reparacion"
-        minSdk = 29
+        minSdk = 26
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
-        versionName = "1.2.1"
+        versionName = "1.2.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk{

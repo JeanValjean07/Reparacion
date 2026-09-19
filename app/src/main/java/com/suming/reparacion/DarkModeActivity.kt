@@ -22,6 +22,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -77,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.ActivityComponents.DarkMode.DarkModeFragment
@@ -423,7 +425,7 @@ class DarkModeActivity: AppCompatActivity() {
             val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
             DarkModeIcon.setOnClickListener {
                 ToolVibrate().vibrate(this@DarkModeActivity)
-                notice("哼,哼,啊啊啊啊啊啊啊")
+                notice("？！强强 ？！")
             }
         }
     }
@@ -496,15 +498,33 @@ class DarkModeActivity: AppCompatActivity() {
             val ButtonClearWp = findViewById<Button>(R.id.buttonClear)
             ButtonClearWp.setOnClickListener {
                 ToolVibrate().vibrate(this@DarkModeActivity)
-                clearWallPaper()
-                notice("已清除")
+
+                AlertDialog.Builder(this@DarkModeActivity)
+                    .setTitle("确定清除壁纸吗?")
+                    .setMessage("将清除所有壁纸，不可撤销")
+                    .setPositiveButton("确认") { dialog, _ ->
+                        ToolVibrate().vibrate(this@DarkModeActivity)
+
+                        clearWallPaper()
+                        notice("已清除")
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("取消") { dialog, _ ->
+                        ToolVibrate().vibrate(this@DarkModeActivity)
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
             }
         }
     }
     //加载已设置的图片
     private fun LoadWallpaper(){
         lifecycleScope.launch(Dispatchers.IO) {
-            delay(500)
+            delay(200)
             //读取标志位
             val darkSet = SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)
             val lightSet = SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)

@@ -2,7 +2,9 @@ package com.suming.reparacion
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BlurMaskFilter
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +13,8 @@ import android.widget.FrameLayout
 import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
@@ -71,10 +75,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import kotlin.compareTo
 
-@Suppress("LocalVariableName")
+@Suppress("LocalVariableName","unused","NewApi")
 class SettingsActivity : AppCompatActivity() {
 
+
+    private val context = this@SettingsActivity
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -308,44 +318,75 @@ class SettingsActivity : AppCompatActivity() {
 
     //Main Thread Functions
     @SuppressLint("SetTextI18n")
-    private fun register(){
+    private fun register() {
         lifecycleScope.launch(Dispatchers.IO) {
-            delay(500)
+            delay(100)
             //读取版本
             val version = packageManager.getPackageInfo(packageName, 0).versionName
+            //获取是不是debug版
+            val isDebug = isDebugVersion()
+
 
             //更新UI
             withContext(Dispatchers.Main) {
                 //修改版本号显示
                 val versionText = findViewById<TextView>(R.id.version)
-                versionText.text = "版本: $version"
+                versionText.text = "版本: $version" + if (isDebug) " (Debug)" else ""
                 //SvgRepo
                 val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)
                 buttonGoSvgRepo.setOnClickListener {
-                    ToolVibrate().vibrate(this@SettingsActivity)
-                    val url = "https://www.svgrepo.com/"
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                    startActivity(intent)
+                    vibrate()
+                    AlertDialog.Builder(context)
+                        .setTitle("确定跳转吗?")
+                        .setMessage("将唤醒浏览器并打开svgrepo.com")
+                        .setPositiveButton("确认") { dialog, _ ->
+                            vibrate()
+
+                            val url = "https://www.svgrepo.com/"
+                            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                            startActivity(intent)
+
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("取消") { dialog, _ ->
+                            vibrate()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
                 }
                 //按钮：查看Github仓库
                 val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
                 ButtonGoGithub.setOnClickListener {
-                    ToolVibrate().vibrate(this@SettingsActivity)
-                    val url = "https://github.com/JeanValjean07/HarmonyOS4_Reparacion/releases"
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                    startActivity(intent)
-                }
-                //按钮：反馈问题
-                val ButtonReportIssue = findViewById<TextView>(R.id.buttonReportIssue)
-                ButtonReportIssue.setOnClickListener {
-                    ToolVibrate().vibrate(this@SettingsActivity)
-                    val url = "https://space.bilibili.com/1206378184"
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                    startActivity(intent)
+                    vibrate()
+
+                    AlertDialog.Builder(context)
+                        .setTitle("将跳转至浏览器")
+                        .setMessage("是否继续?")
+                        .setPositiveButton("确认") { dialog, _ ->
+                            vibrate()
+
+                            val url = "https://github.com/JeanValjean07/HarmonyOS4_Reparacion/releases"
+                            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                            startActivity(intent)
+
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("取消") { dialog, _ ->
+                            vibrate()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+
                 }
                 //超链接：开放源代码许可
                 val ButtonOpenSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
                 ButtonOpenSourceLicense.paint.isUnderlineText = true
+                ButtonOpenSourceLicense.invalidate()
                 ButtonOpenSourceLicense.setOnClickListener {
                     ToolVibrate().vibrate(this@SettingsActivity)
                     startActivity(
@@ -458,6 +499,44 @@ class SettingsActivity : AppCompatActivity() {
         ContentSpaceTop = findViewById(R.id.ScrollTopSpace)
 
     }
+
+    private fun vibrate(){
+        ToolVibrate().vibrate(this)
+    }
+
+    //检测当前是release版还是debug版
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun isDebugVersion(): Boolean {
+        //仅支持安卓9及以上版本
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
+            return false
+        }
+
+
+        //获取签名信息
+        val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signingInfo = packageInfo.signingInfo ?: return false
+        //
+        if (signingInfo.hasMultipleSigners()) {
+            return false
+        }
+
+        val signatures = signingInfo.signingCertificateHistory
+        for (sig in signatures) {
+            val cert = sig.toByteArray()
+            val input = ByteArrayInputStream(cert)
+            val cf = CertificateFactory.getInstance("X509")
+            val c = cf.generateCertificate(input) as X509Certificate
+            val name = c.subjectDN.name
+            if (name.contains("Android Debug")) {
+                return true
+            }else{
+                return false
+            }
+        }
+        return true
+    }
+
     //统一日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {

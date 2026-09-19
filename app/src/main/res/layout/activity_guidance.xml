@@ -55,7 +55,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0"
                         android:padding="16dp"
-                        android:text="问题反馈丨B站私信"
+                        android:text="问题反馈"
                         android:textSize="13sp" />
                     <View
                         android:layout_width="match_parent"

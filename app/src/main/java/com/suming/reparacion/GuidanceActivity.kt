@@ -10,7 +10,9 @@ import android.widget.ImageButton
 import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -66,6 +68,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.AddonTools.ToolVibrate
+import com.suming.reparacion.AddonTools.showCustomToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -320,9 +323,7 @@ class GuidanceActivity : AppCompatActivity() {
                 val ButtonReportIssue = findViewById<TextView>(R.id.buttonReportIssue)
                 ButtonReportIssue.setOnClickListener {
                     ToolVibrate().vibrate(this@GuidanceActivity)
-                    val url = "https://space.bilibili.com/1206378184"
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                    startActivity(intent)
+                    showReportMenu(ButtonReportIssue)
                 }
 
             }
@@ -332,6 +333,118 @@ class GuidanceActivity : AppCompatActivity() {
 
 
 
+
+    //弹出反馈菜单
+    private fun showReportMenu(button:TextView){
+        val popup = PopupMenu(this@GuidanceActivity, button)
+        popup.menuInflater.inflate(R.menu.popup_menu_settings_report_platform, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.platform_coolapk -> {
+                    vibrate()
+
+                    reportByCoolApk()
+
+                    true
+                }
+
+                R.id.platform_bilibili -> {
+                    vibrate()
+
+                    reportByBilibili()
+
+                    true
+                }
+
+                R.id.platform_github_issue -> {
+                    vibrate()
+
+                    reportByGithubIssue()
+
+                    true
+                }
+
+                else -> true
+            }
+        }
+        popup.show()
+    }
+    private fun reportByBilibili(){
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒哔哩哔哩App或浏览器")
+            .setPositiveButton("确认") { dialog, _ ->
+                vibrate()
+
+                val url = "https://space.bilibili.com/1206378184"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                showCustomToast("正在跳转",3)
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                vibrate()
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+    }
+    private fun reportByCoolApk(){
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒酷安App或浏览器")
+            .setPositiveButton("确认") { dialog, which ->
+                vibrate()
+
+                val webUrl = "https://www.coolapk.com/u/3105725"
+                val intent = Intent(Intent.ACTION_VIEW, webUrl.toUri())
+
+                showCustomToast("正在跳转,请稍等",3)
+
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                vibrate()
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+
+    }
+    private fun reportByGithubIssue(){
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒浏览器或Github客户端")
+            .setPositiveButton("确认") { dialog, _ ->
+                vibrate()
+
+                val url = "https://github.com/JeanValjean07/Player/issues"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                showCustomToast("正在跳转",3)
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                vibrate()
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+    }
+
+    private fun vibrate(){
+        ToolVibrate().vibrate(this)
+    }
 
     //修改顶部占位高度
     private fun updateTopSpaceHeight(height: Int){
