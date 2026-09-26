@@ -1,3 +1,17 @@
+
+plugins {
+    //addon
+
+    //basic advanced (compose,room,oss)
+    alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.jetbrainsCompose) apply false
+    //basic traditional (kotlin,agp,ksp)
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.ksp)
+
+}
+
 buildscript {
     repositories {
         maven { url = uri("https://maven.aliyun.com/repository/releases") }
@@ -10,16 +24,12 @@ buildscript {
         google()
         mavenCentral()
     }
+
     dependencies {
-        classpath("com.android.tools.build:gradle:8.11.0")
-        classpath("com.google.android.gms:oss-licenses-plugin:0.10.6")
+
     }
+
+
 }
 
 
-plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.compose.compiler) apply false
-    alias(libs.plugins.jetbrainsCompose) apply false
-}

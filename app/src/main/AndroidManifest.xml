@@ -21,8 +21,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="补全计划"
         android:supportsRtl="true"
-        android:extractNativeLibs="true"
-        android:theme="@style/BASIC_ACTIVITY_NO_BAR">
+        android:theme="@style/BASIC_ACTIVITY"
+        >
 
 
 
@@ -68,11 +68,13 @@
         <!-- 音量控制 -->
         <activity android:name="com.suming.reparacion.VolumeControl"
             android:label="音量控制"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:exported="true"
             />
         <!-- 小组件管理中心 -->
         <activity android:name="com.suming.reparacion.WidgetManager"
             android:label="小组件管理中心"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:exported="true"
             />
 
@@ -82,6 +84,7 @@
         <!-- 指南 -->
         <activity android:name="com.suming.reparacion.GuidanceActivity"
             android:label="指南与帮助"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:exported="true"
             />
         <!-- 设置 -->
@@ -166,16 +169,13 @@
                 android:resource="@xml/widget_info_clock_column" />
         </receiver>
 
-        <!-- 开放源代码许可(谷歌OSS) -->
-        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
-            android:screenOrientation="portrait"
+        <!-- OSS (新版无法指定主题) -->
+        <activity android:name="com.google.android.gms.oss.licenses.v2.OssLicensesMenuActivity"
             android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
-            android:screenOrientation="portrait"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-        <!-- TrashCan - 存档不再使用的旧代码 -->
+            />
+
+
+        <!-- TrashCan -->
 
 
 

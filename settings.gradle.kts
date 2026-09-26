@@ -1,6 +1,9 @@
+
+//general
+include(":app")
 pluginManagement {
+
     repositories {
-        //添加镜像源
         maven { url = uri("https://maven.aliyun.com/repository/releases") }
         maven { url = uri("https://maven.aliyun.com/repository/google") }
         maven { url = uri("https://maven.aliyun.com/repository/central") }
@@ -8,7 +11,7 @@ pluginManagement {
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://mirrors.cloud.tencent.com/maven/") }
         maven { url = uri("https://mirrors.huaweicloud.com/repository/maven/") }
-        //谷歌官方源
+
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -16,11 +19,20 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        //官方源
+
         mavenCentral()
         gradlePluginPortal()
     }
+
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "com.google.android.gms.oss-licenses-plugin") {
+                useModule("com.google.android.gms:oss-licenses-plugin:0.13.0")
+            }
+        }
+    }
 }
+@Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -36,5 +48,7 @@ dependencyResolutionManagement {
     }
 }
 
+
+//define
 rootProject.name = "Reparacion"
-include(":app")
+

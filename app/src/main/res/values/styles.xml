@@ -1,13 +1,24 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
+
+
+
+
+
+    <!-- 可通用部分(到处复制) -->
     <!-- Activity主题 -->
+    <!-- 基础Activity主题-保留顶栏 -->
+    <style name="BASIC_ACTIVITY" parent="Theme.Material3.DayNight">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
     <!-- 基础Activity主题-移除顶栏 -->
     <style name="BASIC_ACTIVITY_NO_BAR" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
-
 
     <!-- Fragment主题 -->
     <!-- 基础Fragment主题-移除顶栏 -->
@@ -30,6 +41,13 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <!-- oss页面主题 (新版已不支持) -->
+    <style name="OSS_Google" parent="Theme.Material3.DayNight">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 
 
 

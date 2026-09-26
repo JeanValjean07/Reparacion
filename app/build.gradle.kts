@@ -1,21 +1,24 @@
-import org.gradle.kotlin.dsl.main
 
 plugins {
+    //basic advanced (compose,room,oss)
+    alias(libs.plugins.oss.licenses)
+    //basic traditional
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
-    id("com.google.android.gms.oss-licenses-plugin")
 
 }
 
+@Suppress("DEPRECATION")
 android {
     namespace = "com.suming.reparacion"
-    //noinspection GradleDependency,GradleDependency
-    compileSdk = 36
+    //编译sdk
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.suming.reparacion"
         minSdk = 26
+        maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
@@ -39,7 +42,7 @@ android {
         }
     }
 
-    packagingOptions{
+    packaging{
         jniLibs{
             useLegacyPackaging = true
         }
@@ -52,33 +55,9 @@ android {
         }
     }
 
-    /*
-    aaptOptions {
-        cruncherEnabled = false
-        useNewCruncher = false
-        // 启用WebP压缩
-        additionalParameters(
-            "--auto-convert-bitmaps", "--enable-webp"
-        )
-    }*/
-
-    /*
-    splits {
-        abi {
-            enable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            universalApk = false
-        }
-    }*/
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlinOptions {
-       jvmTarget = "21"
     }
 
     buildFeatures {
@@ -88,40 +67,36 @@ android {
 
     sourceSets {
         named("main") {
-            aidl.srcDirs("src/main/aidl")
+            aidl.directories.add("src/main/aidl")
         }
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4"
     }
 
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+}
+
 dependencies {
-    implementation("com.google.android.gms:play-services-oss-licenses:17.2.2")
-    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material:material")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
-    // Compose
-    implementation("androidx.compose.foundation:foundation:1.8.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
-    implementation("androidx.compose.material3:material3:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:1.2.0")
+
+    //basic advanced (compose,room,oss,bybom)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.material)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.activity.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.ui.graphics)
-
-
-    //Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-
-
-    //AndroidX
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    implementation(libs.play.services.oss.licenses)
+    //basic traditional (kotlin,agp,ksp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -129,15 +104,10 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.ui.android)
     implementation(libs.androidx.material3.android)
-
-    //Material3
-    //implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.runtime)
-    //implementation(libs.androidx.animation)
     implementation(libs.androidx.foundation.layout)
-    //implementation(libs.androidx.compose.testing)
 
 
 }

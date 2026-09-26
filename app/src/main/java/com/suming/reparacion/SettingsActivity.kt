@@ -389,6 +389,7 @@ class SettingsActivity : AppCompatActivity() {
                 ButtonOpenSourceLicense.invalidate()
                 ButtonOpenSourceLicense.setOnClickListener {
                     ToolVibrate().vibrate(this@SettingsActivity)
+                    @Suppress("DEPRECATION")
                     startActivity(
                         Intent(this@SettingsActivity, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
                     )

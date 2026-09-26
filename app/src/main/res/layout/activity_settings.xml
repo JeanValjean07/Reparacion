@@ -256,8 +256,6 @@
 
 
 
-
-
             <!--  超链接样式:开源许可  -->
             <TextView
                 android:id="@+id/openSourceLicense"
@@ -269,6 +267,12 @@
                 android:text="开放源代码许可"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
+
+            <!--  底部占位  -->
+            <Space
+                android:layout_height="300dp"
+                android:layout_width="match_parent"
+                />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
