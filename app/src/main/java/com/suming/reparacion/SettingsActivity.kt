@@ -67,10 +67,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import androidx.core.view.WindowCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.AddonTools.ToolVibrate
+import com.suming.reparacion.AddonTools.showCustomToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -78,7 +78,6 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import kotlin.compareTo
 
 @Suppress("LocalVariableName","unused","NewApi")
 class SettingsActivity : AppCompatActivity() {
@@ -389,10 +388,7 @@ class SettingsActivity : AppCompatActivity() {
                 ButtonOpenSourceLicense.invalidate()
                 ButtonOpenSourceLicense.setOnClickListener {
                     ToolVibrate().vibrate(this@SettingsActivity)
-                    @Suppress("DEPRECATION")
-                    startActivity(
-                        Intent(this@SettingsActivity, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
-                    )
+                    showCustomToast("暂不支持")
                 }
                 //振动模式
                 val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)

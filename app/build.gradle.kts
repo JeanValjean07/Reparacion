@@ -1,11 +1,9 @@
 
 plugins {
-    //basic advanced (compose,room,oss)
-    alias(libs.plugins.oss.licenses)
-    //basic traditional
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
 
 }
 
@@ -81,33 +79,32 @@ kotlin {
 
 dependencies {
 
-
-    //basic advanced (compose,room,oss,bybom)
-    implementation(platform(libs.compose.bom))
+    //compose
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
-    implementation(libs.compose.material.icons.extended)
-    implementation(libs.compose.ui)
-    implementation(libs.compose.material)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.activity.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.compose.connect.activity)   //activity的compose支持
+    implementation(libs.compose.connect.viewmodel)   //viewmodel的compose支持
+    implementation(platform(libs.compose.bom))   //自动版本匹配
+    implementation(libs.compose.extended.icons)   //图标扩展
+
+    //room
+    ksp(libs.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation(libs.play.services.oss.licenses)
-    //basic traditional (kotlin,agp,ksp)
+
+    //fragment core (原则上自行选出)
+    implementation(libs.fragment.core.ktx)
+    //android core (原则上自行选出)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.ui.android)
-    implementation(libs.androidx.material3.android)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.runtime)
-    implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.core.activity)
+    implementation(libs.androidx.core.appcompat)
+    implementation(libs.androidx.core.view.constraint)
+    implementation(libs.androidx.core.view.animation)
+    implementation(libs.androidx.core.view.material)
+
+
 
 
 }
