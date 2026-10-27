@@ -19,8 +19,8 @@ android {
         maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.2.2"
+        versionCode = 26102701
+        versionName = "1.2.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk{
@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material)
     implementation(libs.compose.connect.activity)   //activity的compose支持
     implementation(libs.compose.connect.viewmodel)   //viewmodel的compose支持
     implementation(platform(libs.compose.bom))   //自动版本匹配
@@ -94,8 +95,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
 
-    //fragment core (原则上自行选出)
-    implementation(libs.fragment.core.ktx)
+
     //android core (原则上自行选出)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.activity)
@@ -103,7 +103,7 @@ dependencies {
     implementation(libs.androidx.core.view.constraint)
     implementation(libs.androidx.core.view.animation)
     implementation(libs.androidx.core.view.material)
-
+    implementation(libs.androidx.fragment.core.ktx)
 
 
 

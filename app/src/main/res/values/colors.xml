@@ -50,6 +50,12 @@
     <color name="ButtonCardOnCard_Background">#FFFFFFFF</color>
 
 
+    <!-- 单色胶囊提示 -->
+    <color name="toast_light_background">#FFFFFFFF</color>
+    <color name="toast_light_text">#FF212121</color>
+    <!-- 变色胶囊提示 -->
+    <color name="toast_dynamic_background">#FFFFFFFF</color>
+    <color name="toast_dynamic_text">#FF212121</color>
 
 
 </resources>
