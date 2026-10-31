@@ -16,46 +16,29 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -64,16 +47,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -83,7 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppFragment
 import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppViewModel
-import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerRepo
 import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.DataPack.AppInfo
 import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
@@ -96,8 +73,15 @@ class LocalAppManager: AppCompatActivity() {
     private val context = this@LocalAppManager
     //ComposeElementBundle
     private lateinit var ComposeElementBundle: ComposeElementBundle
+    //ComposeColorPack
+    private lateinit var ColorPack: ColorScheme
     //深色模式标记
     private var isDarkMode: Boolean = false
+    //振动
+    private fun vibrate(){
+        ToolVibrate().vibrate(context)
+    }
+
 
 
 
@@ -109,9 +93,6 @@ class LocalAppManager: AppCompatActivity() {
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         //手动设置状态栏字体颜色
         setStatusBarFontColor()
-
-        //初始化颜色模式
-        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
 
 
@@ -139,10 +120,17 @@ class LocalAppManager: AppCompatActivity() {
 
 
 
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
     @Composable
     fun ComposeRoot() {
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         //初始化组件仓库
         ComposeElementBundle = ComposeElementBundle(isDarkMode)
+        //初始化颜色模式
+        ColorPack = ComposeElementBundle.ColorPack
+
 
 
         //使用Box作为根布局
@@ -192,15 +180,18 @@ class LocalAppManager: AppCompatActivity() {
         //点击菜单
         var showMenu by remember { mutableStateOf(false) }
 
+        //应用列表状态监听
         val listState = rememberLazyListState()
         val top by remember {
             derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
         }
         isContentTop.value = top
-        //
+
+
+
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().background(if (isDarkMode) Color(0xFF151515) else Color(0xFFFFFFFF)),
+            modifier = Modifier.fillMaxSize().background(Color.Transparent),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
@@ -208,148 +199,110 @@ class LocalAppManager: AppCompatActivity() {
                 Box(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    AppCard(
-                        packageName = application.appPackageName,
-                        appName = application.appName,
+                    //显示卡片
+                    ComposeElementBundle.CARD_WITH_CORNER_c_v1(
                         onClick = {
-                            ToolVibrate().vibrate(this@LocalAppManager)
-                            selectedUUID = application.uniqueID; showMenu = true }
+                            vibrate()
+                            selectedUUID = application.uniqueID; showMenu = true
+                        },
+                        content = {
+                            AppCard_Content(application.appPackageName, application.appName)
+                        }
                     )
                     //显示选项菜单
                     if (selectedUUID == application.uniqueID) {
-                        Menu (
+                        ComposeElementBundle.MENU_Dropdown_c_v1(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
-                            content = {
-                                Column {
-                                    Text(
-                                        text = "删除",
-                                        fontSize = 10.sp,
-                                        color = ComposeElementBundle.ColorPack.secondary,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                                    )
-                                }
-                            },
-                            application = application
+                            content = { AppCard_Menu_Content(application) },
                         )
                     }
                 }
             }
         }
+
     }
-    var selectedUUID by mutableStateOf<String?>(null)
+    private var selectedUUID by mutableStateOf<String?>(null)
     @Composable
-    fun Menu(expanded:Boolean,onDismissRequest:() -> Unit,content:@Composable () -> Unit,application:AppInfo) {
-        if (expanded) {
-            DropdownMenu(
-                expanded = true,
-                offset = DpOffset(
-                    x = 100.dp,
-                    y = 0.dp
-                ),
-                onDismissRequest = onDismissRequest,
-                shape = RoundedCornerShape(5.dp),
-                containerColor = Color.Transparent,
-                modifier = Modifier.background(ComposeElementBundle.ColorPack.onBackground)
-            ) {
-                Column {
-                    val ColorPack = ComposeElementBundle.ColorPack
-                    Text(
+    fun AppCard_Menu_Content(application:AppInfo) {
+        Column {
+            val ColorPack = ComposeElementBundle.ColorPack
+            Text(
                         text = "ID $selectedUUID",
                         fontSize = 10.sp,
                         color = ColorPack.secondary,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                     )
-                    Text(
+            Text(
                         text = "包名 ${application.appPackageName}",
                         fontSize = 10.sp,
                         color = ColorPack.secondary,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                     )
-                    DropdownMenuItem(
+            DropdownMenuItem(
                         text = { Text(text = "查看详情", fontSize = 12.sp, color = ColorPack.primary) },
                         onClick = {
-                            ToolVibrate().vibrate(this@LocalAppManager)
+                            vibrate()
 
                             selectedUUID = null
                         }
                     )
-                    DropdownMenuItem(
+            DropdownMenuItem(
                         text = { Text(text = "进入系统通知设置", fontSize = 12.sp, color = ColorPack.primary) },
                         onClick = {
-                            ToolVibrate().vibrate(this@LocalAppManager)
+                            vibrate()
                             //打开系统通知设置页面
                             openNotificationSetting(application.appPackageName)
                             //关闭菜单
                             selectedUUID = null
                         }
                     )
-                    DropdownMenuItem(
+            DropdownMenuItem(
                         text = { Text(text = "进入应用管理页面", fontSize = 12.sp, color = ColorPack.primary) },
                         onClick = {
-                            ToolVibrate().vibrate(this@LocalAppManager)
+                            vibrate()
                             //打开应用管理页面
                             openAppSettingPage(application.appPackageName)
                             //关闭菜单
                             selectedUUID = null
                         }
                     )
-                }
-            }
         }
     }
     @Composable
-    fun AppCard(packageName: String, appName: String, onClick: () -> Unit) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                .uniformShadow()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(containerColor = ComposeElementBundle.ColorPack.background,),
-            onClick = onClick
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(13.dp)
-            ) {
-                val ColorPack = ComposeElementBundle.ColorPack
-                //App名称
-                Text(
-                    text = appName,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ColorPack.primary
-                )
-                //大小标题间距
-                Spacer(modifier = Modifier.height(4.dp))
-                //包名
-                Text(
-                    text = packageName,
-                    fontSize = 9.sp,
-                    color = ColorPack.secondary
-                )
-            }
+    fun AppCard_Content(packageName: String, appName: String) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(13.dp)
+        ){
+            val ColorPack = ComposeElementBundle.ColorPack
+            //App名称
+            Text(
+                text = appName,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = ColorPack.primary
+            )
+            //大小标题间距
+            Spacer(modifier = Modifier.height(4.dp))
+            //包名
+            Text(
+                text = packageName,
+                fontSize = 9.sp,
+                color = ColorPack.secondary
+            )
         }
     }
-    //内容区域是否在顶部标记
-    private val isContentTop = mutableStateOf(true)
     @Composable
     fun ADVANCED_TOP_BAR_Start(){
+        //标题文本
         @Composable
-        fun content(){
-            //标题文本
+        fun text_content(text:String){
+
             Text(
-                text = "应用管理",
+                text = text,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = ComposeElementBundle.ColorPack.primary,
+                color = if (isDarkMode) Color(0xFFFFFFFF) else Color(0xFF212121),
                 modifier = Modifier.padding(start = 10.dp)
             )
         }
@@ -380,13 +333,13 @@ class LocalAppManager: AppCompatActivity() {
                 padding_start = 0.dp,
                 padding_end = 15.dp,
                 padding_vertical = 0.dp,
-                text_content = { content() },
+                text_content = { text_content("应用管理") },
             )
 
             //返回按钮
             ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
                 onClick = {
-                    ToolVibrate().vibrate(context)
+                    vibrate()
                     finish() },
                 backgroundColor = if (isDarkMode){
                     Color(0xFA181818)
@@ -407,15 +360,13 @@ class LocalAppManager: AppCompatActivity() {
 
         }
 
-
-
     }
     @Composable
     fun ADVANCED_TOP_BAR_End(){
         //设置按钮
         ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
             onClick = {
-                ToolVibrate().vibrate(context)
+                vibrate()
                 startSettingFragment()
             },
             backgroundColor = if (isDarkMode){
@@ -437,36 +388,10 @@ class LocalAppManager: AppCompatActivity() {
     @Composable
     fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
         ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
-            color = ComposeElementBundle.ColorPack.surface,
+            color = if (isDarkMode) Color(0xFF000000) else Color(0xFFFFFFFF),
             statusBarHeight_Dp = statusBarHeight_Dp,
             content_Height_Dp = content_Height_Dp
         )
-    }
-    //自定义阴影
-    @Suppress("DEPRECATION")
-    fun Modifier.uniformShadow(
-        blurRadius: Float = 15f,
-        shadowColor: Color = Color.Black.copy(alpha = 0.1f)
-    ) = this.drawBehind {
-        drawIntoCanvas { canvas ->
-            val paint = Paint().apply {
-                color = shadowColor
-                asFrameworkPaint().maskFilter = android.graphics.BlurMaskFilter(
-                    blurRadius,
-                    android.graphics.BlurMaskFilter.Blur.NORMAL
-                )
-            }
-
-            canvas.drawRoundRect(
-                left = 0f,
-                top = 0f,
-                right = size.width,
-                bottom = size.height,
-                radiusX = 12.dp.toPx(),
-                radiusY = 12.dp.toPx(),
-                paint = paint
-            )
-        }
     }
 
 

@@ -23,16 +23,20 @@
         android:id="@+id/ScrollContentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingTop="150dp"
         android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- spaceTop丨顶部占位 -->
+
+            <!-- 顶部占位 -->
+            <!--
             <Space
-                android:id="@+id/ScrollTopSpace"
+                android:id="@+id/top_space"
                 android:layout_width="match_parent"
-                android:layout_height="80dp" />
+                android:layout_height="100dp"/>
+                 -->
 
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
@@ -255,13 +259,20 @@
             </androidx.cardview.widget.CardView>
 
 
+            <!--  底部占位  -->
+            <Space
+                android:layout_height="100dp"
+                android:layout_width="match_parent"
+                />
+
+
 
             <!--  超链接样式:开源许可  -->
             <TextView
                 android:id="@+id/openSourceLicense"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="60dp"
+                android:layout_marginTop="10dp"
                 android:layout_gravity="center"
                 android:clickable="true"
                 android:text="开放源代码许可"
@@ -270,7 +281,7 @@
 
             <!--  底部占位  -->
             <Space
-                android:layout_height="300dp"
+                android:layout_height="100dp"
                 android:layout_width="match_parent"
                 />
 

@@ -2,23 +2,17 @@
 
 
 
-
-
-
-    <!-- 可通用部分(到处复制) -->
-    <!-- Activity主题 -->
-    <!-- 基础Activity主题-保留顶栏 -->
-    <style name="BASIC_ACTIVITY" parent="Theme.Material3.DayNight">
+    <!-- 常规页面 -->
+    <style name="theme_general" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryVariant">@color/color_primary_variant</item>
+        <item name="colorSecondary">@color/color_secondary</item>
+        <item name="android:windowBackground">@color/window_background</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
-    <!-- 基础Activity主题-移除顶栏 -->
-    <style name="BASIC_ACTIVITY_NO_BAR" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+
 
     <!-- Fragment主题 -->
     <!-- 基础Fragment主题-移除顶栏 -->

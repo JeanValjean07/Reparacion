@@ -19,15 +19,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -38,11 +40,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -53,7 +60,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     //颜色配置
     var ColorPack: ColorScheme
     //颜色指定
-    val LightColorScheme = lightColorScheme(
+    val LightColorScheme = lightColorScheme (
         //全局底色
         surface = Color(0xFFFFFFFF),
         //一级和二级文字
@@ -63,7 +70,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
         background = Color(0xFFFFFFFF),
         onBackground = Color(0xFFFFFFFF),
     )
-    val DarkColorScheme = darkColorScheme(
+    val DarkColorScheme = darkColorScheme (
         //全局底色
         surface = Color(0xFF000000),
         //一级和二级文字
@@ -85,12 +92,40 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     }
 
 
+    //自定义阴影
+    @Suppress("DEPRECATION")
+    fun Modifier.uniformShadow (blurRadius: Float = 15f, shadowColor: Color = Color.Gray.copy(alpha = 0.1f)) = this.drawBehind {
+        if (blurRadius <= 0f) return@drawBehind
+
+        drawIntoCanvas { canvas ->
+            val paint = Paint().apply {
+                color = shadowColor
+                asFrameworkPaint().maskFilter = android.graphics.BlurMaskFilter(
+                    blurRadius,
+                    android.graphics.BlurMaskFilter.Blur.NORMAL
+                )
+            }
+
+            canvas.drawRoundRect(
+                left = 0f,
+                top = 0f,
+                right = size.width,
+                bottom = size.height,
+                radiusX = 15.dp.toPx(),
+                radiusY = 15.dp.toPx(),
+                paint = paint
+            )
+        }
+    }
+
+
+
     private val CAPSULE_BUTTON_Height_Dp = 40.dp
     private val CIRCLE_BUTTON_Size_Dp = 40.dp
 
     //圆形悬浮按钮 v1
     @Composable
-    fun CIRCLE_BUTTON_c_v1(
+    fun CIRCLE_BUTTON_c_v1 (
         onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = CIRCLE_BUTTON_Size_Dp, backgroundColor: Color = ColorPack.onBackground,
         gradient: Brush? = null, border: BorderStroke? = null, elevation: Dp = 5.dp, enabled: Boolean = true, content: @Composable () -> Unit
     ) {
@@ -98,7 +133,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
             gradient != null -> Modifier.background(gradient)
             else -> Modifier.background(backgroundColor)
         }
-        Box(
+        Box (
             modifier = modifier
                 .size(size)
                 .shadow(
@@ -206,6 +241,57 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
                 verticalAlignment = Alignment.CenterVertically,
                 content = text_content
             )
+        }
+    }
+
+    //胶囊按钮
+    @Composable
+    fun CAPSULE_BUTTON_c_v3_just_text(
+        onClick: () -> Unit, modifier: Modifier = Modifier,height: Dp = CAPSULE_BUTTON_Height_Dp,backgroundColor: Color = ColorPack.onBackground,
+        border: BorderStroke = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)), elevation: Dp = 5.dp, enabled: Boolean = true,
+        padding_start: Dp = 15.dp,padding_end: Dp = 15.dp, padding_vertical: Dp = 0.dp,
+        text: String,text_size: Float = 15.0f, fontWeight: FontWeight = FontWeight.Normal,
+        color: Color = if (isDarkMode) Color(0xFFFFFFFF) else Color(0xFF212121),
+        text_modifier: Modifier = Modifier
+    ){
+        val backgroundModifier = Modifier.background(backgroundColor)
+        Box(
+            modifier = modifier
+                .wrapContentWidth()
+                .height(height)
+                .shadow(
+                    elevation = elevation,
+                    shape = CircleShape,
+                    clip = false,
+                    spotColor = Color.Black.copy(alpha = 0.4f),
+                    ambientColor = Color.Black.copy(alpha = 0.4f)
+                )
+                .clip(CircleShape)
+                .then(backgroundModifier)
+                .then(Modifier.border(border, CircleShape))
+                .clickable(
+                    enabled = enabled,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(
+                        bounded = true,
+                        color = Color.Gray
+                    )
+                ) { onClick() }
+                .padding(start = padding_start, end = padding_end, top = padding_vertical, bottom = padding_vertical)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxHeight(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ){
+                Text(
+                    text = text,
+                    fontSize = text_size.sp,
+                    fontWeight = fontWeight,
+                    color = color,
+                    modifier = text_modifier
+                )
+            }
         }
     }
 
@@ -412,6 +498,47 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
             Spacer(Modifier.height(topPadding_Dp))
             //内容
             content()
+        }
+    }
+
+
+
+    //CARD
+    @Composable
+    fun CARD_WITH_CORNER_c_v1(onClick: () -> Unit,content: @Composable () -> Unit) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp)
+                .uniformShadow(blurRadius = if (isDarkMode) 0f else 50f, shadowColor = if (isDarkMode) Color(0x00FFFFFF) else Color(0x20000000))
+                .background(Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = RoundedCornerShape(15.dp),
+            colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF111111) else Color(0xFFFFFFFF) ),
+            border = BorderStroke(if (isDarkMode) 0.dp else 0.2.dp, color = if (isDarkMode) Color(0x00FFFFFF) else Color(0x20000000)),
+            onClick = onClick
+        ) {
+            content()
+        }
+    }
+
+
+
+    //Menu
+    @Composable
+    fun MENU_Dropdown_c_v1(expanded:Boolean,onDismissRequest:() -> Unit,content:@Composable () -> Unit){
+        if (expanded) {
+            DropdownMenu(
+                expanded = true,
+                offset = DpOffset(
+                    x = 100.dp,
+                    y = 0.dp
+                ),
+                onDismissRequest = onDismissRequest,
+                shape = RoundedCornerShape(5.dp),
+                containerColor = Color.Transparent,
+                modifier = Modifier.background(ColorPack.onBackground)
+            ) {
+                content()
+            }
         }
     }
 

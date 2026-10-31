@@ -85,6 +85,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.TransitionDrawable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.graphics.drawable.toDrawable
 
@@ -95,8 +96,21 @@ class DarkModeActivity: AppCompatActivity() {
     private val context = this@DarkModeActivity
     //ComposeElementBundle
     private lateinit var ComposeElementBundle: ComposeElementBundle
+    //ComposeColorPack
+    private lateinit var ColorPack: ColorScheme
     //深色模式标记
     private var isDarkMode: Boolean = false
+    //振动
+    private fun vibrate(){
+        ToolVibrate().vibrate(context)
+    }
+    //统一日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
+
 
 
 
@@ -108,9 +122,6 @@ class DarkModeActivity: AppCompatActivity() {
         setContentView(R.layout.activity_dark_mode)
         //准备工作
         init()
-
-        //初始化颜色模式
-        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
 
         //TopBarCompose
@@ -150,10 +161,20 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
+    //内容区域view
+    private lateinit var ContentRoot: NestedScrollView
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
     @Composable
     fun ComposeRoot() {
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         //初始化组件仓库
         ComposeElementBundle = ComposeElementBundle(isDarkMode)
+        //初始化颜色模式
+        ColorPack = ComposeElementBundle.ColorPack
+
+
 
 
         //获取状态栏高度
@@ -190,24 +211,22 @@ class DarkModeActivity: AppCompatActivity() {
 
         }
     }
-    //内容区域view
-    private lateinit var ContentRoot: NestedScrollView
-    //内容区域是否在顶部标记
-    private val isContentTop = mutableStateOf(true)
     @Composable
-    fun ADVANCED_TOP_BAR_Start(){
+    fun ADVANCED_TOP_BAR_Start() {
+        //标题文本
         @Composable
-        fun content(){
-            //标题文本
-            Text(
-                text = "深色模式壁纸",
+        fun text_content(text:String) {
+
+            Text (
+                text = text,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = ComposeElementBundle.ColorPack.primary,
+                color = if (isDarkMode) Color(0xFFFFFFFF) else Color(0xFF212121),
                 modifier = Modifier.padding(start = 10.dp)
             )
         }
 
+        //
         val top = isContentTop.value
         val capsuleProgress by animateFloatAsState(
             targetValue = if (!top) 1f else 0f,
@@ -234,14 +253,15 @@ class DarkModeActivity: AppCompatActivity() {
                 padding_start = 0.dp,
                 padding_end = 15.dp,
                 padding_vertical = 0.dp,
-                text_content = { content() },
+                text_content = { text_content("深色模式壁纸") },
             )
 
             //返回按钮
             ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
                 onClick = {
-                    ToolVibrate().vibrate(this@DarkModeActivity)
-                    finish() },
+                    vibrate()
+                    finish()
+                },
                 backgroundColor = if (isDarkMode){
                     Color(0xFA181818)
                 }else{
@@ -261,15 +281,13 @@ class DarkModeActivity: AppCompatActivity() {
 
         }
 
-
-
     }
     @Composable
     fun ADVANCED_TOP_BAR_End(){
         //设置按钮
         ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
             onClick = {
-                ToolVibrate().vibrate(context)
+                vibrate()
                 startSettingFragment()
             },
             backgroundColor = if (isDarkMode){
@@ -380,7 +398,7 @@ class DarkModeActivity: AppCompatActivity() {
             //点击图标彩蛋
             val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
             DarkModeIcon.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 notice("？！强强 ？！")
             }
         }
@@ -393,11 +411,11 @@ class DarkModeActivity: AppCompatActivity() {
             imageViewDark = findViewById(R.id.imageDark)
             imageViewLight = findViewById(R.id.imageLight)
             imageViewDark?.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 showOptionMenu()
             }
             imageViewLight?.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 showOptionMenu()
             }
 
@@ -405,14 +423,14 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：选择/更改深色壁纸
             val ButtonSelectDarkWp = findViewById<TextView>(R.id.buttonChangeDark)
             ButtonSelectDarkWp.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 consoleLog("开始选择深色壁纸")
                 openGalleryToPick("dark")
             }
             //按钮：选择/更改浅色壁纸
             val ButtonSelectLightWp = findViewById<TextView>(R.id.buttonChangeLight)
             ButtonSelectLightWp.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 consoleLog("开始选择浅色壁纸")
                 openGalleryToPick("light")
             }
@@ -421,25 +439,25 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：返回桌面
             val ButtonSuperExit = findViewById<Button>(R.id.buttonSuperExit)
             ButtonSuperExit.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 moveTaskToBack(true)
             }
             //按钮：切换到深色壁纸
             ButtonSwitchDark = findViewById(R.id.buttonSwitchDark)
             ButtonSwitchDark?.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 switchNow("dark")
             }
             //按钮：切换到浅色壁纸
             ButtonSwitchLight = findViewById(R.id.buttonSwitchLight)
             ButtonSwitchLight?.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 switchNow("light")
             }
             //按钮：添加快捷方式
             val ButtonAddTile = findViewById<Button>(R.id.buttonAddTile)
             ButtonAddTile.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastClickMillis < CoolDownGap_createShortcut) {
                     return@setOnClickListener
@@ -453,13 +471,13 @@ class DarkModeActivity: AppCompatActivity() {
             //按钮：清除壁纸
             val ButtonClearWp = findViewById<Button>(R.id.buttonClear)
             ButtonClearWp.setOnClickListener {
-                ToolVibrate().vibrate(this@DarkModeActivity)
+                vibrate()
 
                 AlertDialog.Builder(this@DarkModeActivity)
                     .setTitle("确定清除壁纸吗?")
                     .setMessage("将清除所有壁纸，不可撤销")
                     .setPositiveButton("确认") { dialog, _ ->
-                        ToolVibrate().vibrate(this@DarkModeActivity)
+                        vibrate()
 
                         clearWallPaper()
                         notice("已清除")
@@ -467,7 +485,7 @@ class DarkModeActivity: AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .setNegativeButton("取消") { dialog, _ ->
-                        ToolVibrate().vibrate(this@DarkModeActivity)
+                        vibrate()
 
                         dialog.dismiss()
                     }
@@ -1063,7 +1081,7 @@ class DarkModeActivity: AppCompatActivity() {
                         }
                         //附加一段额外延时,确保系统桌面处理完毕
                         delay(2000.milliseconds)
-                        ToolVibrate().vibrate(this@DarkModeActivity)
+                        vibrate()
                         moveTaskToBack(true)
                         resetButtonInfo()
                         //结束进程
@@ -1257,12 +1275,6 @@ class DarkModeActivity: AppCompatActivity() {
     //显示短通知
     private fun notice(text: String) {
         showCustomToast(text)
-    }
-    //统一日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", msg)
-        }
     }
 
 

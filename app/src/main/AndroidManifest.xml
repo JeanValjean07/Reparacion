@@ -21,14 +21,14 @@
         android:icon="@mipmap/ic_launcher"
         android:label="补全计划"
         android:supportsRtl="true"
-        android:theme="@style/BASIC_ACTIVITY"
+        android:theme="@style/theme_general"
         >
 
 
 
         <!-- 主页 -->
         <activity android:name="com.suming.reparacion.MainActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,43 +38,43 @@
         <!-- 深色模式壁纸 -->
         <activity android:name="com.suming.reparacion.DarkModeActivity"
             android:label="深色模式壁纸"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <activity android:name="com.suming.reparacion.DarkModePure"
             android:label="深色模式壁纸纯净版"
             android:excludeFromRecents="true"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <!-- 通知管理 -->
         <activity android:name="com.suming.reparacion.NotificationManager"
             android:label="通知管理"
             android:exported="true"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             />
         <!-- 应用管理 -->
         <activity android:name="com.suming.reparacion.LocalAppManager"
             android:label="应用管理"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <!-- 后台检查 -->
         <activity android:name="com.suming.reparacion.BackgroundCheckActivity"
             android:label="后台检查"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <!-- 音量控制 -->
         <activity android:name="com.suming.reparacion.VolumeControl"
             android:label="音量控制"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <!-- 小组件管理中心 -->
         <activity android:name="com.suming.reparacion.WidgetManager"
             android:label="小组件管理中心"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
 
@@ -84,14 +84,25 @@
         <!-- 指南 -->
         <activity android:name="com.suming.reparacion.GuidanceActivity"
             android:label="指南与帮助"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
             />
         <!-- 设置 -->
         <activity android:name="com.suming.reparacion.SettingsActivity"
             android:label="设置/关于"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:exported="true"
+            />
+
+        <!-- AboutLibraries -->
+        <activity android:name=".OSS_LICENSE.OssLicensePage"
+            android:theme="@style/theme_general"
+            android:screenOrientation="unspecified"
+            android:label="开源许可证"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"
+            tools:targetApi="33"
             />
 
 
@@ -169,13 +180,6 @@
                 android:resource="@xml/widget_info_clock_column" />
         </receiver>
 
-        <!-- OSS (新版无法指定主题) -->
-        <activity android:name="com.google.android.gms.oss.licenses.v2.OssLicensesMenuActivity"
-            android:exported="true"
-            />
-
-
-        <!-- TrashCan -->
 
 
 

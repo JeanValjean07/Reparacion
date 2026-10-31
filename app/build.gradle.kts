@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
 
+    //AboutLibraries
+    id("com.mikepenz.aboutlibraries.plugin.android")
+
 }
 
 @Suppress("DEPRECATION")
@@ -78,6 +81,12 @@ kotlin {
 }
 
 dependencies {
+
+
+    //AboutLibraries  (执行 ./gradlew :app:prepareLibraryDefinitionsDebug 生成到 build/generated/aboutLibraries/ 复制到res/raw )
+    implementation("com.mikepenz:aboutlibraries-compose-m3:15.3.0")
+
+
 
     //compose
     implementation(libs.compose.runtime)

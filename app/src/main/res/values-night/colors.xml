@@ -58,4 +58,13 @@
     <color name="toast_dynamic_background">#FF515151</color>
     <color name="toast_dynamic_text">#FFFFFFFF</color>
 
+    <!-- 全局底色 -->
+    <color name="window_background">#FF000000</color>
+    <!-- 全局主题色 -->
+    <color name="color_primary">#FFD1C4E9</color>
+    <color name="color_primary_variant">#FFB39DDB</color>
+    <color name="color_secondary">#FFEDE7F6</color>
+
+
+
 </resources>

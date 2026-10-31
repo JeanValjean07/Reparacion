@@ -88,6 +88,7 @@ import com.suming.reparacion.AddonTools.showCustomToast
 import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LocalVariableName")
 class MainActivity : AppCompatActivity() {
@@ -98,8 +99,15 @@ class MainActivity : AppCompatActivity() {
     private val context = this@MainActivity
     //ComposeElementBundle
     private lateinit var ComposeElementBundle: ComposeElementBundle
+    //ComposeColorPack
+    private lateinit var ColorPack: ColorScheme
     //深色模式标记
     private var isDarkMode: Boolean = false
+    //振动
+    private fun vibrate(){
+        ToolVibrate().vibrate(context)
+    }
+
 
 
     @Suppress("DEPRECATION")
@@ -115,12 +123,10 @@ class MainActivity : AppCompatActivity() {
         isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
 
-        //工具列表
-        val toolsList = ToolList.toolsList
 
         //ComposableRoot
         setContent {
-            ComposeRoot(toolsList, mainViewModel)
+            ComposeRoot()
         }
 
     }
@@ -128,11 +134,17 @@ class MainActivity : AppCompatActivity() {
 
 
     @Composable
-    fun ComposeRoot(toolsList: List<ToolPackage>, mainViewModel: MainViewModel) {
+    fun ComposeRoot() {
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         //初始化组件仓库
         ComposeElementBundle = ComposeElementBundle(isDarkMode)
+        //初始化颜色模式
+        ColorPack = ComposeElementBundle.ColorPack
 
 
+        //读取工具列表
+        val toolsList = ToolList.toolsList
 
         Box(modifier = Modifier.fillMaxSize()) {
 
@@ -161,23 +173,26 @@ class MainActivity : AppCompatActivity() {
                 brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
             )
         }
+
     }
     //内容区域是否在顶部标记
     private val isContentTop = mutableStateOf(true)
     @Composable
     fun ADVANCED_TOP_BAR_Start(){
+        //标题文本
         @Composable
-        fun content(){
-            //标题文本
+        fun text_content(text:String){
+
             Text(
-                text = "补全计划",
+                text = text,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = ComposeElementBundle.ColorPack.primary,
+                color = if (isDarkMode) Color(0xFFFFFFFF) else Color(0xFF212121),
                 modifier = Modifier.padding(start = 10.dp)
             )
         }
 
+        //
         val top = isContentTop.value
         val capsuleProgress by animateFloatAsState(
             targetValue = if (!top) 1f else 0f,
@@ -204,13 +219,13 @@ class MainActivity : AppCompatActivity() {
                 padding_start = 0.dp,
                 padding_end = 15.dp,
                 padding_vertical = 0.dp,
-                text_content = { content() },
+                text_content = { text_content("补全计划") },
             )
 
             //返回按钮
             ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
                 onClick = {
-                    ToolVibrate().vibrate(context)
+                    vibrate()
                     finish() },
                 backgroundColor = if (isDarkMode){
                     Color(0xFA181818)
@@ -228,10 +243,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-
         }
-
-
 
     }
     @Composable
@@ -239,7 +251,7 @@ class MainActivity : AppCompatActivity() {
         //指南按钮
         ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
             onClick = {
-                ToolVibrate().vibrate(context)
+                vibrate()
                 startGuide()
             },
             backgroundColor = if (isDarkMode){
@@ -260,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         //设置按钮
         ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
             onClick = {
-                ToolVibrate().vibrate(context)
+                vibrate()
                 startSetting()
             },
             backgroundColor = if (isDarkMode){
@@ -283,7 +295,7 @@ class MainActivity : AppCompatActivity() {
     @Composable
     fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
         ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
-            color = ComposeElementBundle.ColorPack.surface,
+            color = if (isDarkMode) Color(0xFF000000) else Color(0xFFFFFFFF),
             statusBarHeight_Dp = statusBarHeight_Dp,
             content_Height_Dp = content_Height_Dp
         )
@@ -295,12 +307,13 @@ class MainActivity : AppCompatActivity() {
         val contentPadding by derivedStateOf {
             PaddingValues(
                 top = animatedTopPadding,
-                bottom = 400.dp,
+                bottom = 100.dp,
                 start = 0.dp,
                 end = 0.dp
             )
         }
 
+        //
         val listState = rememberLazyListState()
         val top by remember {
             derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
@@ -309,64 +322,45 @@ class MainActivity : AppCompatActivity() {
         //
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().background(if (isDarkMode) Color(0xFF151515) else Color(0xFFFFFFFF)),
+            modifier = Modifier.fillMaxSize().background(Color.Transparent),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            //item { Spacer(modifier = Modifier.height(100.dp)) }
             items(toolsList) { tool ->
-                ToolCard(
-                    name = tool.name,
-                    description = tool.description,
+                //显示卡片
+                ComposeElementBundle.CARD_WITH_CORNER_c_v1(
                     onClick = {
-                        ToolVibrate().vibrate(this@MainActivity)
+                        vibrate()
                         onClickListItem(tool.intent)
+                    },
+                    content = {
+                        ToolCard_Content(tool.name, tool.description)
                     }
                 )
             }
         }
     }
     @Composable
-    fun ToolCard(name: String, description: String, onClick: () -> Unit) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                //.shadow(elevation = 5.dp, shape = RoundedCornerShape(12.dp), clip = false, spotColor = Color.Black.copy(alpha = 0.2f), ambientColor = Color.Black.copy(alpha = 1f))
-                .uniformShadow()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = ComposeElementBundle.ColorPack.background,
-            ),
-            onClick = onClick
+    fun ToolCard_Content(name: String, description: String) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(13.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(13.dp)
-            ) {
-                val ColorPack = ComposeElementBundle.ColorPack
-                //大标题
-                Text(
-                    text = name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ColorPack.primary
-                )
-                //大小标题间距
-                Spacer(modifier = Modifier.height(4.dp))
-                //小标题或描述
-                Text(
-                    text = description,
-                    fontSize = 12.sp,
-                    color = ColorPack.secondary
-                )
-            }
+            val ColorPack = ComposeElementBundle.ColorPack
+            //大标题
+            Text(
+                text = name,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = ColorPack.primary
+            )
+            //大小标题间距
+            Spacer(modifier = Modifier.height(4.dp))
+            //小标题或描述
+            Text(
+                text = description,
+                fontSize = 12.sp,
+                color = ColorPack.secondary
+            )
         }
     }
     //自定义阴影
@@ -436,19 +430,11 @@ class MainActivity : AppCompatActivity() {
     }
     //退出应用
     private fun exitApp() {
-        consoleLog("主动退出应用")
         //先回桌面
-        /*
-        val intent = Intent(Intent.ACTION_MAIN)
-        intent.addCategory(Intent.CATEGORY_HOME)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
-
-         */
         moveTaskToBack(true)
         //结束进程
         lifecycleScope.launch {
-            delay(500)
+            delay(500.milliseconds)
             val pid = android.os.Process.myPid()
             android.os.Process.killProcess(pid)
         }
