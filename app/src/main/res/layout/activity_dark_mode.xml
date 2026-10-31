@@ -23,11 +23,21 @@
         android:id="@+id/ScrollContentRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingTop="150dp"
         android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+            <!-- 顶部占位 -->
+            <!--
+            <Space
+                android:id="@+id/top_space"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"/>
+                 -->
+
             <!-- 顶部装饰 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"

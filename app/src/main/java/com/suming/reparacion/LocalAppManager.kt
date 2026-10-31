@@ -12,6 +12,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,6 +37,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -83,11 +86,20 @@ import com.suming.reparacion.ActivityComponents.LocalAppManager.LocalAppViewMode
 import com.suming.reparacion.ActivityComponents.NotificationManager.NotificationManagerRepo
 import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.DataPack.AppInfo
+import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
 
 class LocalAppManager: AppCompatActivity() {
 
     //连接到LocalAppViewModel
     private val localAppViewModel: LocalAppViewModel by viewModels()
+    //ctx
+    private val context = this@LocalAppManager
+    //ComposeElementBundle
+    private lateinit var ComposeElementBundle: ComposeElementBundle
+    //深色模式标记
+    private var isDarkMode: Boolean = false
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +110,11 @@ class LocalAppManager: AppCompatActivity() {
         //手动设置状态栏字体颜色
         setStatusBarFontColor()
 
-        consoleLog("LocalAppManager onCreate：${savedInstanceState}")
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+
+
         //启动读取
         if (savedInstanceState == null){
             localAppViewModel.loadLocalAppList(this)
@@ -125,193 +141,42 @@ class LocalAppManager: AppCompatActivity() {
 
     @Composable
     fun ComposeRoot() {
-        //在root中取颜色模式
-        isDarkMode = isSystemInDarkTheme()
-        ColorPack = if (isDarkMode) DarkColorScheme else LightColorScheme
-        //自动感知通知列表变化
-        val noticeList by NotificationManagerRepo.list.collectAsState()
+        //初始化组件仓库
+        ComposeElementBundle = ComposeElementBundle(isDarkMode)
+
+
         //使用Box作为根布局
         Box(modifier = Modifier.fillMaxSize()) {
-            //顶部栏高度值
-            val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-            var topBarHeight by remember { mutableIntStateOf(300) }
-            val topPaddingDp = with(LocalDensity.current) {
-                (statusBarHeight + topBarHeight).toDp()
-            }
+
+            //获取状态栏高度
+            val statusBarHeight_Px = WindowInsets.statusBars.getTop(LocalDensity.current)
+            val statusBarHeight_Dp = with(LocalDensity.current) { statusBarHeight_Px.toDp() }
+
+            //缓存总高度值
+            var topAll_Height_Px by remember { mutableIntStateOf(300) }
+            val topAll_Height_Dp = with(LocalDensity.current) { topAll_Height_Px.toDp() }
+
+
+
             //自动感知应用列表变化
             val applicationList by localAppViewModel.list.collectAsState()
-
-
-            //最底层
-            GlobalBackPic()
-
             //应用列表
-            AppListColumn(applicationList, topPaddingDp )
+            AppListColumn(applicationList, topAll_Height_Dp)
+
 
             //最顶层
-            BrushArea()
-            AdvancedTopBar(onHeightMeasured = { height ->
-                topBarHeight = height
-            })
-        }
-    }
-    @OptIn(ExperimentalMaterial3Api::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @Composable
-    fun AdvancedTopBar(onHeightMeasured: (height: Int) -> Unit) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(60.dp)
-                .onGloballyPositioned { coordinates ->
-                    onHeightMeasured(coordinates.size.height)
+            ComposeElementBundle.ADVANCED_TOP_BAR_c_v2_dual(
+                onHeightMeasured = { height ->
+                    topAll_Height_Px = height
                 },
-            color = Color.Transparent,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(59.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@LocalAppManager)
-                                finish() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(start = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "退出",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        Text(
-                            text = "应用管理",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorPack.primary,
-                            modifier = Modifier.padding(start = 0.dp)
-                        )
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //设置按钮
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@LocalAppManager)
-                                startSettingFragment() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = "设置",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                    }
-                }
-            }
+                modifier = Modifier,
+                statusBarHeight_Dp = statusBarHeight_Dp,
+                startContent = { ADVANCED_TOP_BAR_Start() },
+                endContent = { ADVANCED_TOP_BAR_End() },
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+            )
         }
     }
-    @Composable
-    fun CircleButton( onClick: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      size: Dp = 30.dp,
-                      backgroundColor: Color = MaterialTheme.colorScheme.primary,
-                      gradient: Brush? = null,
-                      border: BorderStroke? = null,
-                      elevation: Dp = 3.dp,
-                      enabled: Boolean = true,
-                      content: @Composable () -> Unit ) {
-        val backgroundModifier = when {
-            gradient != null -> Modifier.background(gradient)
-            else -> Modifier.background(backgroundColor)
-        }
-        Box(
-            modifier = modifier
-                .size(size)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = Color.Black.copy(alpha = 0.4f),  // 控制阴影颜色
-                    ambientColor = Color.Black.copy(alpha = 0.4f)
-                )
-                .then(if (border != null) Modifier.border(border, CircleShape) else Modifier)
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() },
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
-    }
-    @Composable
-    fun BrushArea(modifier: Modifier = Modifier, height: Dp = 90.dp) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorPack.surface.copy(alpha = 0.90f),
-                            ColorPack.surface.copy(alpha = 0.0f)
-                        ),
-                    )
-                )
-        )
-    }
-    @Composable
-    fun GlobalBackPic(){
-        //放置一个全屏底部区域，未来支持设置自定义壁纸
-
-        val darkTheme: Boolean = isSystemInDarkTheme()
-        val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(colorScheme.surface)
-        )
-
-
-    }
-    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnrememberedMutableState")
     @Composable
     fun AppListColumn(applicationList: List<AppInfo>, animatedTopPadding: Dp) {
@@ -326,9 +191,16 @@ class LocalAppManager: AppCompatActivity() {
         }
         //点击菜单
         var showMenu by remember { mutableStateOf(false) }
+
+        val listState = rememberLazyListState()
+        val top by remember {
+            derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+        }
+        isContentTop.value = top
         //
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            modifier = Modifier.fillMaxSize().background(if (isDarkMode) Color(0xFF151515) else Color(0xFFFFFFFF)),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
@@ -345,15 +217,15 @@ class LocalAppManager: AppCompatActivity() {
                     )
                     //显示选项菜单
                     if (selectedUUID == application.uniqueID) {
-                        Menu(
+                        Menu (
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
                             content = {
-                                Column() {
+                                Column {
                                     Text(
                                         text = "删除",
                                         fontSize = 10.sp,
-                                        color = ColorPack.secondary,
+                                        color = ComposeElementBundle.ColorPack.secondary,
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
                                     )
                                 }
@@ -367,10 +239,7 @@ class LocalAppManager: AppCompatActivity() {
     }
     var selectedUUID by mutableStateOf<String?>(null)
     @Composable
-    fun Menu( expanded: Boolean,
-        onDismissRequest: () -> Unit,
-        content: @Composable () -> Unit,
-        application: AppInfo ) {
+    fun Menu(expanded:Boolean,onDismissRequest:() -> Unit,content:@Composable () -> Unit,application:AppInfo) {
         if (expanded) {
             DropdownMenu(
                 expanded = true,
@@ -381,9 +250,10 @@ class LocalAppManager: AppCompatActivity() {
                 onDismissRequest = onDismissRequest,
                 shape = RoundedCornerShape(5.dp),
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(ColorPack.onBackground)
+                modifier = Modifier.background(ComposeElementBundle.ColorPack.onBackground)
             ) {
                 Column {
+                    val ColorPack = ComposeElementBundle.ColorPack
                     Text(
                         text = "ID $selectedUUID",
                         fontSize = 10.sp,
@@ -392,12 +262,6 @@ class LocalAppManager: AppCompatActivity() {
                     )
                     Text(
                         text = "包名 ${application.appPackageName}",
-                        fontSize = 10.sp,
-                        color = ColorPack.secondary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                    )
-                    Text(
-                        text = "内部字符 ${application.appNameChar}",
                         fontSize = 10.sp,
                         color = ColorPack.secondary,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
@@ -449,12 +313,13 @@ class LocalAppManager: AppCompatActivity() {
                 width = 0.5.dp,
                 color = Color.Gray.copy(alpha = 0.1f)
             ),
-            colors = CardDefaults.cardColors(containerColor = ColorPack.background,),
+            colors = CardDefaults.cardColors(containerColor = ComposeElementBundle.ColorPack.background,),
             onClick = onClick
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(13.dp)
             ) {
+                val ColorPack = ComposeElementBundle.ColorPack
                 //App名称
                 Text(
                     text = appName,
@@ -473,7 +338,110 @@ class LocalAppManager: AppCompatActivity() {
             }
         }
     }
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
+    @Composable
+    fun ADVANCED_TOP_BAR_Start(){
+        @Composable
+        fun content(){
+            //标题文本
+            Text(
+                text = "应用管理",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComposeElementBundle.ColorPack.primary,
+                modifier = Modifier.padding(start = 10.dp)
+            )
+        }
 
+        val top = isContentTop.value
+        val capsuleProgress by animateFloatAsState(
+            targetValue = if (!top) 1f else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "capsuleProgress"
+        )
+
+        Box {
+
+            //胶囊标题区
+            ComposeElementBundle.CAPSULE_BUTTON_c_v2_avoid_circle(
+                text_onClick = { },
+                modifier = Modifier.padding(start = 15.dp),
+                elevation = if (!top) 10.dp else 0.dp,
+                backgroundColor = if (isDarkMode) {
+                    Color(0xFA181818).copy(alpha = if (!top) 1f else 0f)
+                } else {
+                    Color(0xFFFFFFFF).copy(alpha = if (!top) 1f else 0f)
+                },
+                border = BorderStroke(
+                    width = 0.3.dp * capsuleProgress,
+                    color = Color.Gray.copy(alpha = 0.3f * capsuleProgress)
+                ),
+                padding_start = 0.dp,
+                padding_end = 15.dp,
+                padding_vertical = 0.dp,
+                text_content = { content() },
+            )
+
+            //返回按钮
+            ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+                onClick = {
+                    ToolVibrate().vibrate(context)
+                    finish() },
+                backgroundColor = if (isDarkMode){
+                    Color(0xFA181818)
+                }else{
+                    Color(0xFFFFFFFF)
+                },
+                border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+                modifier = Modifier.padding(start = 15.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "退出",
+                    modifier = Modifier.background(Color.Transparent),
+                    tint = ComposeElementBundle.ColorPack.secondary
+                )
+            }
+
+
+        }
+
+
+
+    }
+    @Composable
+    fun ADVANCED_TOP_BAR_End(){
+        //设置按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                ToolVibrate().vibrate(context)
+                startSettingFragment()
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 15.dp)
+        ) {
+            Icon(
+                Icons.Filled.Settings,
+                contentDescription = "设置",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
+        }
+    }
+    @Composable
+    fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
+        ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
+            color = ComposeElementBundle.ColorPack.surface,
+            statusBarHeight_Dp = statusBarHeight_Dp,
+            content_Height_Dp = content_Height_Dp
+        )
+    }
     //自定义阴影
     @Suppress("DEPRECATION")
     fun Modifier.uniformShadow(
@@ -500,29 +468,7 @@ class LocalAppManager: AppCompatActivity() {
             )
         }
     }
-    //composable颜色配置
-    private var isDarkMode: Boolean = false
-    private lateinit var ColorPack: ColorScheme
-    private val LightColorScheme = lightColorScheme(
-        //全局底色
-        surface = Color(0xFFFFFFFF),
-        //一级和二级文字
-        primary = Color(0xFF000000),
-        secondary = Color(0xFF313131),
-        //卡片底色
-        background = Color(0xFFFFFFFF),
-        onBackground = Color(0xFFFFFFFF),
-        )
-    private val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF000000),
-        //一级和二级文字
-        primary = Color(0xFFFFFFFF),
-        secondary = Color(0xFFF6F6F6),
-        //卡片底色
-        background = Color(0xFF121212),
-        onBackground = Color(0xFF212121),
-    )
+
 
 
     //打开系统通知设置页面

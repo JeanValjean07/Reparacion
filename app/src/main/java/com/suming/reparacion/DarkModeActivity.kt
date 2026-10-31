@@ -1,10 +1,12 @@
 package com.suming.reparacion
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BlurMaskFilter
@@ -17,6 +19,7 @@ import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -26,50 +29,31 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -78,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
-import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import com.suming.reparacion.ActivityComponents.DarkMode.DarkModeFragment
@@ -88,6 +71,7 @@ import com.suming.reparacion.DataPack.Descriptions
 import com.suming.reparacion.FunctionalPack.BitmapLoader
 import com.suming.reparacion.FunctionalPack.WallpaperFileWrapper
 import com.suming.reparacion.FunctionalPack.WallpaperSetor
+import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -96,9 +80,25 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
+import kotlin.time.Duration.Companion.milliseconds
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.TransitionDrawable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.graphics.drawable.toDrawable
 
 @Suppress("LocalVariableName")
 class DarkModeActivity: AppCompatActivity() {
+
+    //ctx
+    private val context = this@DarkModeActivity
+    //ComposeElementBundle
+    private lateinit var ComposeElementBundle: ComposeElementBundle
+    //深色模式标记
+    private var isDarkMode: Boolean = false
+
+
 
     @SuppressLint("MissingInflatedId", "InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,6 +108,9 @@ class DarkModeActivity: AppCompatActivity() {
         setContentView(R.layout.activity_dark_mode)
         //准备工作
         init()
+
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
 
         //TopBarCompose
@@ -146,200 +149,153 @@ class DarkModeActivity: AppCompatActivity() {
     }
 
 
-    //Composable Functions
+
     @Composable
     fun ComposeRoot() {
-        //在root中取颜色模式
-        isDarkMode = isSystemInDarkTheme()
-        ColorPack = if (isDarkMode) DarkColorScheme else LightColorScheme
+        //初始化组件仓库
+        ComposeElementBundle = ComposeElementBundle(isDarkMode)
+
+
+        //获取状态栏高度
+        val statusBarHeight_Px = WindowInsets.statusBars.getTop(LocalDensity.current)
+        val statusBarHeight_Dp = with(LocalDensity.current) { statusBarHeight_Px.toDp() }
+
+        //缓存总高度值
+        var topAll_Height_Px by remember { mutableIntStateOf(300) }
+        val topAll_Height_Dp = with(LocalDensity.current) { topAll_Height_Px.toDp() }
+
+
         //使用Box作为根布局
         Box(modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
-            .background(Color.Transparent)) {
-            //获取顶部栏高度值
-            val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-
+            .background(Color.Transparent)
+        ){
 
             //最顶层
-            BrushArea()
-            AdvancedTopBar(onHeightMeasured = { height ->
-                consoleLog("AdvancedTopBar:：onHeightMeasured：测量高度: $height ,顶部栏高度: $statusBarHeight")
-                //更新内边距
-                if (statusBarHeight > 0){
-                    updateNestTopPadding(height + statusBarHeight)
-                }
-            })
-        }
-    }
-    private lateinit var ContentRoot: NestedScrollView
-    @OptIn(ExperimentalMaterial3Api::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @Composable
-    fun AdvancedTopBar(onHeightMeasured: (height: Int) -> Unit) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(60.dp)
-                .onGloballyPositioned { coordinates ->
-                    consoleLog("AdvancedTopBar: onGloballyPositioned：测量高度: ${coordinates.size.height}")
-                    onHeightMeasured(coordinates.size.height)
+            ComposeElementBundle.ADVANCED_TOP_BAR_c_v2_dual(
+                onHeightMeasured = { height ->
+                    topAll_Height_Px = height
+                    //更新内边距
+                    if (height > 0){
+                        updateNestTopPadding_Advanced(topAll_Height_Px)
+                    }
                 },
-            color = Color.Transparent,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(59.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    //左侧
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //返回按钮
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@DarkModeActivity)
-                                finish() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(start = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "退出",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        //标题文本
-                        Text(
-                            text = "深色模式壁纸",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorPack.primary,
-                            modifier = Modifier.padding(start = 0.dp)
-                        )
-                    }
-                    //右侧
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //设置按钮
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@DarkModeActivity)
-                                startSettingFragment() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = "设置",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-    @Composable
-    fun CircleButton( onClick: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      size: Dp = 30.dp,
-                      backgroundColor: Color = MaterialTheme.colorScheme.primary,
-                      gradient: Brush? = null,
-                      border: BorderStroke? = null,
-                      elevation: Dp = 3.dp,
-                      enabled: Boolean = true,
-                      content: @Composable () -> Unit ) {
-        val backgroundModifier = when {
-            gradient != null -> Modifier.background(gradient)
-            else -> Modifier.background(backgroundColor)
-        }
-        Box(
-            modifier = modifier
-                .size(size)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = Color.Black.copy(alpha = 0.4f),  // 控制阴影颜色
-                    ambientColor = Color.Black.copy(alpha = 0.4f)
-                )
-                .then(if (border != null) Modifier.border(border, CircleShape) else Modifier)
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() },
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
-    }
-    @Composable
-    fun BrushArea(modifier: Modifier = Modifier, height: Dp = 90.dp) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorPack.surface.copy(alpha = 0.90f),
-                            ColorPack.surface.copy(alpha = 0.0f)
-                        ),
-                    )
-                )
-        )
-    }
-    //composable颜色配置
-    private var isDarkMode: Boolean = false
-    private lateinit var ColorPack: ColorScheme
-    private val LightColorScheme = lightColorScheme(
-        //全局底色
-        surface = Color(0xFFFFFFFF),
-        //一级和二级文字
-        primary = Color(0xFF000000),
-        secondary = Color(0xFF313131),
-        //卡片底色
-        background = Color(0xFFFFFFFF),
+                modifier = Modifier,
+                statusBarHeight_Dp = statusBarHeight_Dp,
+                startContent = { ADVANCED_TOP_BAR_Start() },
+                endContent = { ADVANCED_TOP_BAR_End() },
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+            )
 
+        }
+    }
+    //内容区域view
+    private lateinit var ContentRoot: NestedScrollView
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
+    @Composable
+    fun ADVANCED_TOP_BAR_Start(){
+        @Composable
+        fun content(){
+            //标题文本
+            Text(
+                text = "深色模式壁纸",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComposeElementBundle.ColorPack.primary,
+                modifier = Modifier.padding(start = 10.dp)
+            )
+        }
+
+        val top = isContentTop.value
+        val capsuleProgress by animateFloatAsState(
+            targetValue = if (!top) 1f else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "capsuleProgress"
         )
-    private val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF000000),
-        //一级和二级文字
-        primary = Color(0xFFFFFFFF),
-        secondary = Color(0xFFF6F6F6),
-        //卡片底色
-        background = Color(0xFF121212),
-    )
+
+        Box {
+
+            //胶囊标题区
+            ComposeElementBundle.CAPSULE_BUTTON_c_v2_avoid_circle(
+                text_onClick = { },
+                modifier = Modifier.padding(start = 15.dp),
+                elevation = if (!top) 10.dp else 0.dp,
+                backgroundColor = if (isDarkMode) {
+                    Color(0xFA181818).copy(alpha = if (!top) 1f else 0f)
+                } else {
+                    Color(0xFFFFFFFF).copy(alpha = if (!top) 1f else 0f)
+                },
+                border = BorderStroke(
+                    width = 0.3.dp * capsuleProgress,
+                    color = Color.Gray.copy(alpha = 0.3f * capsuleProgress)
+                ),
+                padding_start = 0.dp,
+                padding_end = 15.dp,
+                padding_vertical = 0.dp,
+                text_content = { content() },
+            )
+
+            //返回按钮
+            ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+                onClick = {
+                    ToolVibrate().vibrate(this@DarkModeActivity)
+                    finish() },
+                backgroundColor = if (isDarkMode){
+                    Color(0xFA181818)
+                }else{
+                    Color(0xFFFFFFFF)
+                },
+                border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+                modifier = Modifier.padding(start = 15.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "退出",
+                    modifier = Modifier.background(Color.Transparent),
+                    tint = ComposeElementBundle.ColorPack.secondary
+                )
+            }
+
+
+        }
+
+
+
+    }
+    @Composable
+    fun ADVANCED_TOP_BAR_End(){
+        //设置按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                ToolVibrate().vibrate(context)
+                startSettingFragment()
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 15.dp)
+        ) {
+            Icon(
+                Icons.Filled.Settings,
+                contentDescription = "设置",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
+        }
+    }
+    @Composable
+    fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
+        ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
+            color = ComposeElementBundle.ColorPack.surface,
+            statusBarHeight_Dp = statusBarHeight_Dp,
+            content_Height_Dp = content_Height_Dp
+        )
+    }
     //自定义阴影
     @Suppress("DEPRECATION")
     fun Modifier.uniformShadow(
@@ -368,7 +324,7 @@ class DarkModeActivity: AppCompatActivity() {
     }
     @Composable
     fun ExplanationRoot(){
-        Card(
+        Card (
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
@@ -379,7 +335,7 @@ class DarkModeActivity: AppCompatActivity() {
                 color = Color.Gray.copy(alpha = 0.1f)
             ),
             colors = CardDefaults.cardColors(
-                containerColor = ColorPack.background,
+                containerColor = ComposeElementBundle.ColorPack.background,
             ),
             onClick = {}
         ){
@@ -394,7 +350,7 @@ class DarkModeActivity: AppCompatActivity() {
                     text = Descriptions.textString_description_darkmodepaper_general,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = ColorPack.primary,
+                    color = ComposeElementBundle.ColorPack.primary,
                 )
                 val brand = Build.BRAND.lowercase()
                 if (brand.contains("huawei") || brand.contains("honor")){
@@ -402,25 +358,25 @@ class DarkModeActivity: AppCompatActivity() {
                         text = Descriptions.textString_description_darkmodepaper_huawei,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
-                        color = ColorPack.primary,
+                        color = ComposeElementBundle.ColorPack.primary,
                     )
                 }
                 Text(
                     text = Descriptions.textString_description_author_sign,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = ColorPack.primary,
+                    color = ComposeElementBundle.ColorPack.primary,
                 )
             }
         }
     }
-    //访问xml颜色表 colorResource(id = R.color.HeadText)
 
-    //Main Thread Functions
+
+
     //注册非必要按钮
     private fun registerMoreActions(){
         lifecycleScope.launch(Dispatchers.Main) {
-            delay(500)
+            delay(500.milliseconds)
             //点击图标彩蛋
             val DarkModeIcon = findViewById<ImageView>(R.id.sign_dark_mode)
             DarkModeIcon.setOnClickListener {
@@ -432,7 +388,7 @@ class DarkModeActivity: AppCompatActivity() {
     //注册主要操作区
     private fun registerMainActions(){
         lifecycleScope.launch(Dispatchers.Main) {
-            delay(500)
+            delay(500.milliseconds)
             //点击图片区域弹出菜单
             imageViewDark = findViewById(R.id.imageDark)
             imageViewLight = findViewById(R.id.imageLight)
@@ -521,10 +477,14 @@ class DarkModeActivity: AppCompatActivity() {
             }
         }
     }
+
+
+
+
     //加载已设置的图片
     private fun LoadWallpaper(){
         lifecycleScope.launch(Dispatchers.IO) {
-            delay(200)
+            delay(200.milliseconds)
             //读取标志位
             val darkSet = SettingsRequestCenter.get_State_dark_paper_set(this@DarkModeActivity)
             val lightSet = SettingsRequestCenter.get_State_light_paper_set(this@DarkModeActivity)
@@ -582,8 +542,6 @@ class DarkModeActivity: AppCompatActivity() {
             }
         }
     }
-
-    //Functions
     //保存图片
     private fun saveImage(croppedBitmap: Bitmap, clippedBitmap: Bitmap, mode: String){
         //保存图片到内部
@@ -772,8 +730,36 @@ class DarkModeActivity: AppCompatActivity() {
 
     //修改滚动区域顶部内边距
     private fun updateNestTopPadding(topPadding: Int){
-        consoleLog("updateNestTopPadding: 发起修改内边距")
         ContentRoot.setPadding(0, topPadding, 0, 0)
+    }
+    //修改滚动区域顶部内边距 Advanced
+    private var paddingAnimator: ValueAnimator? = null
+    private fun updateNestTopPadding_Advanced(topPadding: Int) {
+        paddingAnimator?.cancel()
+
+        val currentPadding = ContentRoot.paddingTop
+        if (currentPadding == topPadding) return
+
+        paddingAnimator = ValueAnimator.ofInt(currentPadding, topPadding).apply {
+            duration = 500L
+            interpolator = DecelerateInterpolator(2f)
+            addUpdateListener { animator ->
+                val value = animator.animatedValue as Int
+                ContentRoot.setPadding(0, value, 0, 0)
+            }
+            start()
+        }
+    }
+    //监听内容区域nestedScrollView是否在顶部
+    private fun setupScrollContentListener(){
+        ContentRoot.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            //未在顶部时隐藏顶部栏文字区
+            if (scrollY == 0){
+                isContentTop.value = true
+            }else{
+                isContentTop.value = false
+            }
+        }
     }
 
     //重复过滤器
@@ -842,13 +828,34 @@ class DarkModeActivity: AppCompatActivity() {
         //
         when(mode){
             "dark" -> {
-                imageViewDark?.setImageBitmap(bitmap)
+                //imageViewDark?.setImageBitmap(bitmap)
+                crossFadeImage(imageViewDark,bitmap)
             }
             "light" -> {
-                imageViewLight?.setImageBitmap(bitmap)
+                //imageViewLight?.setImageBitmap(bitmap)
+                crossFadeImage(imageViewLight,bitmap)
             }
         }
     }
+    private fun crossFadeImage(imageView: ImageView?, bitmap: Bitmap) {
+        imageView ?: return
+        val oldDrawable = imageView.drawable
+
+        //如果之前没有图，直接设置并淡入
+        if (oldDrawable == null) {
+            imageView.setImageBitmap(bitmap)
+            imageView.alpha = 0f
+            imageView.animate().alpha(1f).setDuration(200L).start()
+            return
+        }
+
+        val newDrawable = bitmap.toDrawable(imageView.resources)
+        //layers[0] 是旧图（底层），layers[1] 是新图（顶层，从透明淡入）
+        val transition = TransitionDrawable(arrayOf(oldDrawable, newDrawable))
+        imageView.setImageDrawable(transition)
+        transition.isCrossFadeEnabled = true   //交叉淡入
+        transition.startTransition(300)
+    } //放置图片时交叉淡入淡出
     private fun clearImageView(){
         imageViewDark?.setImageBitmap(null)
         imageViewLight?.setImageBitmap(null)
@@ -1055,7 +1062,7 @@ class DarkModeActivity: AppCompatActivity() {
                             setButtonInfo(current_setting_mode,"设置成功，即将自动返回桌面",true)
                         }
                         //附加一段额外延时,确保系统桌面处理完毕
-                        delay(2000)
+                        delay(2000.milliseconds)
                         ToolVibrate().vibrate(this@DarkModeActivity)
                         moveTaskToBack(true)
                         resetButtonInfo()
@@ -1172,7 +1179,7 @@ class DarkModeActivity: AppCompatActivity() {
         actionGapJob?.cancel()
         state_paper_apply_running = true
         actionGapJob = lifecycleScope.launch {
-            delay(3000)
+            delay(3000.milliseconds)
             state_paper_apply_running = false
         }
     }
@@ -1185,7 +1192,7 @@ class DarkModeActivity: AppCompatActivity() {
     private fun noPaperNoticeJob(){
         noPaperNoticeJob?.cancel()
         noPaperNoticeJob = lifecycleScope.launch {
-            delay(2000)
+            delay(2000.milliseconds)
             resetButtonInfo()
         }
     }
@@ -1243,6 +1250,8 @@ class DarkModeActivity: AppCompatActivity() {
     private fun init() {
         //共享视图初始化
         ContentRoot = findViewById(R.id.ScrollContentRoot)
+        //监听内容区域nestedScrollView是否在顶部
+        setupScrollContentListener()
 
     }
     //显示短通知

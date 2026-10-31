@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,9 +37,11 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SnippetFolder
@@ -57,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -81,6 +85,7 @@ import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.DataPack.ToolList
 import com.suming.reparacion.DataPack.ToolPackage
 import com.suming.reparacion.AddonTools.showCustomToast
+import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -89,6 +94,13 @@ class MainActivity : AppCompatActivity() {
 
     //连接到ViewModel
     private val mainViewModel: MainViewModel by viewModels()
+    //ctx
+    private val context = this@MainActivity
+    //ComposeElementBundle
+    private lateinit var ComposeElementBundle: ComposeElementBundle
+    //深色模式标记
+    private var isDarkMode: Boolean = false
+
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +110,9 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         //手动设置状态栏字体颜色
         setStatusBarFontColor()
+
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
 
         //工具列表
@@ -110,217 +125,168 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
+
     @Composable
     fun ComposeRoot(toolsList: List<ToolPackage>, mainViewModel: MainViewModel) {
-        //在root中取颜色模式
-        isDarkMode = isSystemInDarkTheme()
-        ColorPack = if (isDarkMode) DarkColorScheme else LightColorScheme
-        //使用Box作为根布局
+        //初始化组件仓库
+        ComposeElementBundle = ComposeElementBundle(isDarkMode)
+
+
+
         Box(modifier = Modifier.fillMaxSize()) {
 
-            //顶部栏高度值
-            val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-            var topBarHeight by remember { mutableIntStateOf(500) }
-            val topPaddingDp = with(LocalDensity.current) {
-                (statusBarHeight + topBarHeight).toDp()
-            }
+            //获取状态栏高度
+            val statusBarHeight_Px = WindowInsets.statusBars.getTop(LocalDensity.current)
+            val statusBarHeight_Dp = with(LocalDensity.current) { statusBarHeight_Px.toDp() }
 
-            //顶部栏高度值动画 也可不使用动画单纯传值
-            //曲线可选 CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
-            val animatedTopPadding by animateDpAsState(
-                targetValue = topPaddingDp,
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = FastOutSlowInEasing
-                )
-            )
+            //缓存总高度值
+            var topAll_Height_Px by remember { mutableIntStateOf(300) }
+            val topAll_Height_Dp = with(LocalDensity.current) { topAll_Height_Px.toDp() }
 
-            //最底层
-            GlobalBackPic()
 
             //
-            ToolsListColumn(toolsList, topPaddingDp )
+            ToolsListColumn(toolsList, topAll_Height_Dp)
 
 
             //最顶层
-            BrushArea()
-            AdvancedTopBar(onHeightMeasured = { height ->
-                    topBarHeight = height
-                })
-        }
-    }
-    @OptIn(ExperimentalMaterial3Api::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @Composable
-    fun AdvancedTopBar(onHeightMeasured: (height: Int) -> Unit) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(60.dp)
-                .onGloballyPositioned { coordinates ->
-                    onHeightMeasured(coordinates.size.height)
+            ComposeElementBundle.ADVANCED_TOP_BAR_c_v2_dual(
+                onHeightMeasured = { height ->
+                    topAll_Height_Px = height
                 },
-            color = Color.Transparent,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier,
+                statusBarHeight_Dp = statusBarHeight_Dp,
+                startContent = { ADVANCED_TOP_BAR_Start() },
+                endContent = { ADVANCED_TOP_BAR_End() },
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+            )
+        }
+    }
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
+    @Composable
+    fun ADVANCED_TOP_BAR_Start(){
+        @Composable
+        fun content(){
+            //标题文本
+            Text(
+                text = "补全计划",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComposeElementBundle.ColorPack.primary,
+                modifier = Modifier.padding(start = 10.dp)
+            )
+        }
+
+        val top = isContentTop.value
+        val capsuleProgress by animateFloatAsState(
+            targetValue = if (!top) 1f else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "capsuleProgress"
+        )
+
+        Box {
+
+            //胶囊标题区
+            ComposeElementBundle.CAPSULE_BUTTON_c_v2_avoid_circle(
+                text_onClick = { },
+                modifier = Modifier.padding(start = 15.dp),
+                elevation = if (!top) 10.dp else 0.dp,
+                backgroundColor = if (isDarkMode) {
+                    Color(0xFA181818).copy(alpha = if (!top) 1f else 0f)
+                } else {
+                    Color(0xFFFFFFFF).copy(alpha = if (!top) 1f else 0f)
+                },
+                border = BorderStroke(
+                    width = 0.3.dp * capsuleProgress,
+                    color = Color.Gray.copy(alpha = 0.3f * capsuleProgress)
+                ),
+                padding_start = 0.dp,
+                padding_end = 15.dp,
+                padding_vertical = 0.dp,
+                text_content = { content() },
+            )
+
+            //返回按钮
+            ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+                onClick = {
+                    ToolVibrate().vibrate(context)
+                    finish() },
+                backgroundColor = if (isDarkMode){
+                    Color(0xFA181818)
+                }else{
+                    Color(0xFFFFFFFF)
+                },
+                border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+                modifier = Modifier.padding(start = 15.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(59.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@MainActivity)
-                                exitApp()
-                            },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(start = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Clear,
-                                contentDescription = "退出",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        Text(
-                            text = "补全计划",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorPack.primary,
-                            modifier = Modifier.padding(start = 0.dp)
-                        )
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@MainActivity)
-                                startGuide()
-                            },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 2.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.SnippetFolder,
-                                contentDescription = "指南",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@MainActivity)
-                                startSetting()
-                            },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = "设置",
-                                tint = ColorPack.secondary
-                            )
-                        }
-                    }
-                }
+                Icon(
+                    Icons.Filled.Clear,
+                    contentDescription = "退出",
+                    modifier = Modifier.background(Color.Transparent),
+                    tint = ComposeElementBundle.ColorPack.secondary
+                )
             }
+
+
         }
+
+
+
     }
     @Composable
-    fun CircleButton( onClick: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      size: Dp = 30.dp,
-                      backgroundColor: Color = MaterialTheme.colorScheme.primary,
-                      gradient: Brush? = null,
-                      border: BorderStroke? = null,
-                      elevation: Dp = 3.dp,
-                      enabled: Boolean = true,
-                      content: @Composable () -> Unit ) {
-        val backgroundModifier = when {
-            gradient != null -> Modifier.background(gradient)
-            else -> Modifier.background(backgroundColor)
-        }
-        Box(
-            modifier = modifier
-                .size(size)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = Color.Black.copy(alpha = 0.4f),  // 控制阴影颜色
-                    ambientColor = Color.Black.copy(alpha = 0.4f)
-                )
-                .then(if (border != null) Modifier.border(border, CircleShape) else Modifier)
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() },
-            contentAlignment = Alignment.Center,
+    fun ADVANCED_TOP_BAR_End(){
+        //指南按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                ToolVibrate().vibrate(context)
+                startGuide()
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 0.dp)
         ) {
-            content()
+            Icon(
+                Icons.Filled.SnippetFolder,
+                contentDescription = "指南",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
         }
+        //设置按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                ToolVibrate().vibrate(context)
+                startSetting()
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 15.dp)
+        ) {
+            Icon(
+                Icons.Filled.Settings,
+                contentDescription = "设置",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
+        }
+
     }
     @Composable
-    fun BrushArea(modifier: Modifier = Modifier, height: Dp = 90.dp) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorPack.surface.copy(alpha = 0.90f),
-                            ColorPack.surface.copy(alpha = 0.0f)
-                        ),
-                    )
-                )
+    fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
+        ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
+            color = ComposeElementBundle.ColorPack.surface,
+            statusBarHeight_Dp = statusBarHeight_Dp,
+            content_Height_Dp = content_Height_Dp
         )
-    }
-    @Composable
-    fun GlobalBackPic(){
-        //放置一个全屏底部区域，未来支持设置自定义壁纸
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(ColorPack.surface)
-        )
-
-
     }
     @SuppressLint("UnrememberedMutableState")
     @Composable
@@ -334,9 +300,16 @@ class MainActivity : AppCompatActivity() {
                 end = 0.dp
             )
         }
+
+        val listState = rememberLazyListState()
+        val top by remember {
+            derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+        }
+        isContentTop.value = top
         //
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            modifier = Modifier.fillMaxSize().background(if (isDarkMode) Color(0xFF151515) else Color(0xFFFFFFFF)),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
@@ -370,13 +343,14 @@ class MainActivity : AppCompatActivity() {
                 color = Color.Gray.copy(alpha = 0.1f)
             ),
             colors = CardDefaults.cardColors(
-                containerColor = ColorPack.background,
+                containerColor = ComposeElementBundle.ColorPack.background,
             ),
             onClick = onClick
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(13.dp)
             ) {
+                val ColorPack = ComposeElementBundle.ColorPack
                 //大标题
                 Text(
                     text = name,
@@ -399,7 +373,7 @@ class MainActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     fun Modifier.uniformShadow(
         blurRadius: Float = 20f,
-        shadowColor: Color = ColorPack.secondary.copy(alpha = 0.05f)
+        shadowColor: Color = ComposeElementBundle.ColorPack.secondary.copy(alpha = 0.05f)
     ) = this.drawBehind {
         drawIntoCanvas { canvas ->
             val paint = Paint().apply {
@@ -421,28 +395,8 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-    //composable颜色配置
-    private var isDarkMode: Boolean = false
-    private lateinit var ColorPack: ColorScheme
-    private val LightColorScheme = lightColorScheme(
-        //全局底色
-        surface = Color(0xFFFFFFFF),
-        //一级和二级文字
-        primary = Color(0xFF000000),
-        secondary = Color(0xFF313131),
-        //卡片底色
-        background = Color(0xFFFFFFFF),
 
-        )
-    private val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF000000),
-        //一级和二级文字
-        primary = Color(0xFFFFFFFF),
-        secondary = Color(0xFFF6F6F6),
-        //卡片底色
-        background = Color(0xFF121212),
-    )
+
 
     //处理卡片点击事件
     private fun onClickListItem(toolIntent: String) {
