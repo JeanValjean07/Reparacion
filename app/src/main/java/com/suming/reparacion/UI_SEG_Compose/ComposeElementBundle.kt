@@ -367,7 +367,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
 
 
     //ADVANCED_TOP_BAR Family
-    private val ADVANCED_TOP_BAR_content_height_Dp = 60.dp  //内容区域高度统一为 60 Dp
+    val ADVANCED_TOP_BAR_content_height_Dp = 60.dp  //内容区域高度统一为 60 Dp
     private val ADVANCED_TOP_BAR_default_statusBar_height_Dp = 20.dp  //状态栏高度未传入或有问题时,用 20 Dp保底,宁可往下多一点,至少不被挡住
 
     //顶栏  内容区域完全空白
@@ -419,14 +419,10 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
         startContent: @Composable RowScope.() -> Unit = {}, endContent: @Composable RowScope.() -> Unit = {},
         brushContent: @Composable RowScope.() -> Unit = {}
     ) {
-        //计算区域总高度 Dp
-        val total_height_Dp = statusBarHeight_Dp + ADVANCED_TOP_BAR_content_height_Dp
 
-
-        Surface(
+        Surface (
             modifier = modifier
                 .fillMaxWidth()
-                //.statusBarsPadding()
                 .onGloballyPositioned { onHeightMeasured(it.size.height) },
             color = containerColor,
         ) {
@@ -436,17 +432,17 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
             }
 
             //左右带插槽
-            Row(
+            Row (
                 modifier = Modifier.fillMaxWidth().padding(top = statusBarHeight_Dp).height(ADVANCED_TOP_BAR_content_height_Dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
+                Row (
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     content = startContent
                 )
-                Row(
+                Row (
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     content = endContent
@@ -526,9 +522,9 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     @Composable
     fun MENU_Dropdown_c_v1(expanded:Boolean,onDismissRequest:() -> Unit,content:@Composable () -> Unit){
         if (expanded) {
-            DropdownMenu(
+            DropdownMenu (
                 expanded = true,
-                offset = DpOffset(
+                offset = DpOffset (
                     x = 100.dp,
                     y = 0.dp
                 ),

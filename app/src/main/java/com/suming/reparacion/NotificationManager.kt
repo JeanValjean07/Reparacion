@@ -109,6 +109,14 @@ class NotificationManager: AppCompatActivity() {
     private fun vibrate() {
         ToolVibrate().vibrate(context)
     }
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
+
+
 
 
 
@@ -129,7 +137,6 @@ class NotificationManager: AppCompatActivity() {
 
         val noticeCount = NotificationManagerRepo.getCount()
         NotificationManagerRepo.setNotificationCount(noticeCount)
-        consoleLog("获取到通知数量为: $noticeCount")
 
         //托管给ComposableRoot
         setContent {
@@ -188,7 +195,7 @@ class NotificationManager: AppCompatActivity() {
                 statusBarHeight_Dp = statusBarHeight_Dp,
                 startContent = { ADVANCED_TOP_BAR_Start() },
                 endContent = { ADVANCED_TOP_BAR_End() },
-                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, ComposeElementBundle.ADVANCED_TOP_BAR_content_height_Dp) }
             )
         }
     }
@@ -669,7 +676,6 @@ class NotificationManager: AppCompatActivity() {
     }
     //获取当前通知
     private fun getCurrentNotifications() {
-        consoleLog("向服务拉取当前通知")
         NotificationManagerRepo.setServiceConnect("SERVICE_INTENT_FETCH_ALL")
     }
     //打开系统通知设置页面
@@ -700,12 +706,5 @@ class NotificationManager: AppCompatActivity() {
         )
         insetsController.isAppearanceLightStatusBars = colorModeDetector(this)
     }
-    //统一日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", msg)
-        }
-    }
-
 
 }

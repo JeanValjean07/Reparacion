@@ -1,20 +1,15 @@
 package com.suming.reparacion
 
-import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,44 +21,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Divider
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -75,15 +62,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -94,19 +78,41 @@ import androidx.core.view.WindowCompat
 import com.suming.reparacion.ActivityComponents.WidgetManager.ConfigCenter
 import com.suming.reparacion.AddonTools.ToolVibrate
 import com.suming.reparacion.AddonTools.showCustomToast
+import com.suming.reparacion.UI_SEG_Compose.ComposeElementBundle
 import kotlin.math.roundToInt
 
 class WidgetManager : AppCompatActivity() {
 
 
+    //ctx
+    private val context = this@WidgetManager
+    //ComposeElementBundle
+    private lateinit var ComposeElementBundle: ComposeElementBundle
+    //ComposeColorPack
+    private lateinit var ColorPack: ColorScheme
+    //深色模式标记
+    private var isDarkMode: Boolean = false
+    //是否为多窗口模式
+    private var isMultiWindowMode: Boolean = isInMultiWindowMode
+    //振动
+    private fun vibrate(){
+        ToolVibrate().vibrate(context)
+    }
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //界面配置
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_dark_mode)
-        //准备工作
+
         init()
+
 
 
         //ComposableRoot
@@ -118,210 +124,199 @@ class WidgetManager : AppCompatActivity() {
     }
 
     private fun init() {
+        //界面配置
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_dark_mode)
+
+
+        //初始化是否为多窗口模式
+        isMultiWindowMode = isInMultiWindowMode
 
     }
 
 
 
 
-
+    //内容区域是否在顶部标记
+    private val isContentTop = mutableStateOf(true)
     @Composable
     fun ComposeRoot() {
-        //在root中取颜色模式
-        isDarkMode = isSystemInDarkTheme()
-        ColorPack = if (isDarkMode) DarkColorScheme else LightColorScheme
-        //使用Box作为根布局
+        //初始化颜色模式
+        isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        //初始化组件仓库
+        ComposeElementBundle = ComposeElementBundle(isDarkMode)
+        //初始化颜色模式
+        ColorPack = ComposeElementBundle.ColorPack
+
+
+
         Box(modifier = Modifier.fillMaxSize()) {
+            //获取状态栏高度
+            val statusBarHeight_Px = WindowInsets.statusBars.getTop(LocalDensity.current)
+            val statusBarHeight_Dp = with(LocalDensity.current) { statusBarHeight_Px.toDp() }
 
-            //顶部栏高度值
-            val statusBarHeight = WindowInsets.statusBars.getTop(LocalDensity.current)
-            var topBarHeight by remember { mutableIntStateOf(300) }
-            val topPaddingDp = with(LocalDensity.current) {
-                (statusBarHeight + topBarHeight).toDp()
-            }
+            //缓存总高度值
+            var topAll_Height_Px by remember { mutableIntStateOf(300) }
+            val topAll_Height_Dp = with(LocalDensity.current) { topAll_Height_Px.toDp() }
 
-            //顶部栏高度值动画 也可不使用动画单纯传值
-            //曲线可选 CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
-            val animatedTopPadding by animateDpAsState(
-                targetValue = topPaddingDp,
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = FastOutSlowInEasing
-                )
-            )
 
-            //最底层
-            GlobalBackPic()
 
             //内容层
-            ContentRoot(topPaddingDp)
+            ContentRoot(topAll_Height_Dp)
 
             //最顶层
-            BrushArea()
-            AdvancedTopBar(onHeightMeasured = { height ->
-                topBarHeight = height
-            })
-        }
-    }
-    @OptIn(ExperimentalMaterial3Api::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @Composable
-    fun AdvancedTopBar(onHeightMeasured: (height: Int) -> Unit) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(60.dp)
-                .onGloballyPositioned { coordinates ->
-                    onHeightMeasured(coordinates.size.height)
+            ComposeElementBundle.ADVANCED_TOP_BAR_c_v2_dual (
+                onHeightMeasured = { height ->
+                    topAll_Height_Px = height
                 },
-            color = Color.Transparent,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier,
+                statusBarHeight_Dp = statusBarHeight_Dp,
+                startContent = { ADVANCED_TOP_BAR_Start() },
+                endContent = { ADVANCED_TOP_BAR_End() },
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, ComposeElementBundle.ADVANCED_TOP_BAR_content_height_Dp) }
+            )
+
+        }
+
+    }
+    @Composable
+    fun ADVANCED_TOP_BAR_Start(title:String = "小组件管理"){
+        //标题文本
+        @Composable
+        fun text_content(text:String){
+
+            Text(
+                text = text,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isDarkMode) Color(0xFFFFFFFF) else Color(0xFF212121),
+                modifier = Modifier.padding(start = 10.dp)
+            )
+        }
+
+        //
+        val top = isContentTop.value
+        val capsuleProgress by animateFloatAsState(
+            targetValue = if (!top) 1f else 0f,
+            animationSpec = tween(durationMillis = 300),
+            label = "capsuleProgress"
+        )
+
+        Box {
+
+            //胶囊标题区
+            ComposeElementBundle.CAPSULE_BUTTON_c_v2_avoid_circle (
+                text_onClick = { },
+                modifier = Modifier.padding(start = 15.dp),
+                elevation = if (!top) 10.dp else 0.dp,
+                backgroundColor = if (isDarkMode) {
+                    Color(0xFA181818).copy(alpha = if (!top) 1f else 0f)
+                } else {
+                    Color(0xFFFFFFFF).copy(alpha = if (!top) 1f else 0f)
+                },
+                border = BorderStroke(
+                    width = 0.3.dp * capsuleProgress,
+                    color = Color.Gray.copy(alpha = 0.3f * capsuleProgress)
+                ),
+                padding_start = 0.dp,
+                padding_end = 15.dp,
+                padding_vertical = 0.dp,
+                text_content = { text_content(title) },
+            )
+
+            //返回按钮
+            ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+                onClick = {
+                    vibrate()
+                    finish() },
+                backgroundColor = if (isDarkMode){
+                    Color(0xFA181818)
+                }else{
+                    Color(0xFFFFFFFF)
+                },
+                border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+                modifier = Modifier.padding(start = 15.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(59.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@WidgetManager)
-                                finish() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(start = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "退出",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        Text(
-                            text = "小组件管理",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorPack.primary,
-                            modifier = Modifier.padding(start = 0.dp)
-                        )
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate().vibrate(this@WidgetManager)
-                                showCustomToast("修改设置后，请点击一次桌面小组件以触发刷新")
-                            },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 15.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.QuestionMark,
-                                contentDescription = "刷新",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                    }
-                }
+                Icon (
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "退出",
+                    modifier = Modifier.background(Color.Transparent),
+                    tint = ComposeElementBundle.ColorPack.secondary
+                )
             }
+
         }
+
     }
     @Composable
-    fun CircleButton( onClick: () -> Unit,
-                      modifier: Modifier = Modifier,
-                      size: Dp = 30.dp,
-                      backgroundColor: Color = MaterialTheme.colorScheme.primary,
-                      gradient: Brush? = null,
-                      border: BorderStroke? = null,
-                      elevation: Dp = 3.dp,
-                      enabled: Boolean = true,
-                      content: @Composable () -> Unit ) {
-        val backgroundModifier = when {
-            gradient != null -> Modifier.background(gradient)
-            else -> Modifier.background(backgroundColor)
-        }
-        Box(
-            modifier = modifier
-                .size(size)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = Color.Black.copy(alpha = 0.4f),  // 控制阴影颜色
-                    ambientColor = Color.Black.copy(alpha = 0.4f)
-                )
-                .then(if (border != null) Modifier.border(border, CircleShape) else Modifier)
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() },
-            contentAlignment = Alignment.Center,
+    fun ADVANCED_TOP_BAR_End(){
+        //问号按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                vibrate()
+                showCustomToast("修改设置后，请点击一次桌面小组件以触发刷新")
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 0.dp)
         ) {
-            content()
+            Icon(
+                Icons.Filled.QuestionMark,
+                contentDescription = "说明",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
         }
+        //刷新按钮
+        ComposeElementBundle.CIRCLE_BUTTON_c_v1 (
+            onClick = {
+                vibrate()
+
+            },
+            backgroundColor = if (isDarkMode){
+                Color(0xFA181818)
+            }else{
+                Color(0xFFFFFFFF)
+            },
+            border = BorderStroke(width = 0.3.dp, color = Color.Gray.copy(alpha = 0.3f)),
+            modifier = Modifier.padding(end = 15.dp)
+        ) {
+            Icon(
+                Icons.Filled.Refresh,
+                contentDescription = "刷新",
+                modifier = Modifier.background(Color.Transparent),
+                tint = ComposeElementBundle.ColorPack.secondary
+            )
+        }
+
     }
     @Composable
-    fun BrushArea(modifier: Modifier = Modifier, height: Dp = 90.dp) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorPack.surface.copy(alpha = 0.90f),
-                            ColorPack.surface.copy(alpha = 0.0f)
-                        ),
-                    )
-                )
+    fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
+        ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
+            color = if (isDarkMode) Color(0xFF000000) else Color(0xFFFFFFFF),
+            statusBarHeight_Dp = if (isMultiWindowMode) 0.dp else statusBarHeight_Dp,
+            content_Height_Dp = content_Height_Dp
         )
     }
-    @Composable
-    fun GlobalBackPic(){
-        //放置一个全屏底部区域，未来支持设置自定义壁纸
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(ColorPack.surface)
-        )
-
-
-    }
     @Composable
     fun ContentRoot(topBarHeight: Dp) {
-        Column(
+        //贴顶检测
+        val scrollState = rememberScrollState()
+        val top by remember {
+            derivedStateOf { scrollState.value == 0 }
+        }
+        isContentTop.value = top
+
+        Column (
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(top = topBarHeight),
         ) {
             //颜色配置卡片
@@ -333,7 +328,7 @@ class WidgetManager : AppCompatActivity() {
         }
     }
     @Composable
-    fun TextColorConfigCard(){
+    fun TextColorConfigCard() {
         //设置项1 - 使用字体颜色配置 < 1 - 仅黑白 / 2 - MD3自动取色 / 3 - 完全自定义 >
         val flag_colorConfig = remember { mutableIntStateOf(0) }
         val state_showColorConfigMenu = remember { mutableStateOf(false) }
@@ -361,28 +356,83 @@ class WidgetManager : AppCompatActivity() {
             flag_colorConFig_Type_1_Smooth.value = SettingsRequestCenter.get_PREFS_Color_Config_Type_1_Smooth(this@WidgetManager)
         }
 
-        //
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                .uniformShadow()
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
-        ){
-            Column(
+
+
+        //菜单内容
+        @Composable
+        fun card_menu_mode_content(){
+            Column {
+                val ColorPack = ComposeElementBundle.ColorPack
+                DropdownMenuItem (
+                    text = { Text(text = "简洁", fontSize = 12.sp, color = ColorPack.primary) },
+                    onClick = {
+                        vibrate()
+                        //
+                        SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 1)
+                        updateLocalPrefRemember_flag_colorConfig()
+                        //关闭菜单
+                        state_showColorConfigMenu.value = false
+                    }
+                )
+                DropdownMenuItem (
+                    text = { Text(text = "Material Design 取色", fontSize = 12.sp, color = ColorPack.primary) },
+                    onClick = {
+                        vibrate()
+
+                        SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 2)
+                        updateLocalPrefRemember_flag_colorConfig()
+                        //关闭菜单
+                        state_showColorConfigMenu.value = false
+                    }
+                )
+                DropdownMenuItem (
+                    text = { Text(text = "自定义颜色", fontSize = 12.sp, color = ColorPack.primary) },
+                    onClick = {
+                        vibrate()
+                        SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 3)
+                        updateLocalPrefRemember_flag_colorConfig()
+                        //关闭菜单
+                        state_showColorConfigMenu.value = false
+                    }
+                )
+            }
+
+        }
+        @Composable
+        fun card_menu_dark_or_light_content(){
+            Column {
+                val ColorPack = ComposeElementBundle.ColorPack
+                DropdownMenuItem(
+                    text = { Text(text = "深色", fontSize = 12.sp, color = ColorPack.primary) },
+                    onClick = {
+                        vibrate()
+
+                        ConfigCenter.setBasicConfigColorMode(this@WidgetManager, ConfigCenter.color_mode_dark)
+                        flag_colorConFig_Type_1_Mode.intValue = 1
+                        //关闭菜单
+                        state_showColorConFigType_1_ModeMenu.value = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(text = "浅色", fontSize = 12.sp, color = ColorPack.primary) },
+                    onClick = {
+                        vibrate()
+
+                        ConfigCenter.setBasicConfigColorMode(this@WidgetManager, ConfigCenter.color_mode_light)
+                        flag_colorConFig_Type_1_Mode.intValue = 2
+                        //关闭菜单
+                        state_showColorConFigType_1_ModeMenu.value = false
+                    }
+                )
+            }
+        }
+        @Composable
+        fun card_content() {
+            Column (
                 modifier = Modifier.fillMaxWidth().wrapContentHeight()
             ) {
                 //首行 - 字体颜色选择按钮
-                Row(
+                Row (
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -406,99 +456,48 @@ class WidgetManager : AppCompatActivity() {
                             color = ColorPack.secondary,
                         )
                     }
-                    Row(
+                    Row (
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxHeight().wrapContentWidth()
                     ) {
-                        Card(
+                        Card (
                             modifier = Modifier
                                 .wrapContentWidth()
                                 .fillMaxHeight()
                                 .padding(horizontal = 10.dp, vertical = 8.dp),
                             elevation = CardDefaults.cardElevation(5.dp),
                             shape = RoundedCornerShape(20.dp),
-                            //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
-                            colors = CardDefaults.cardColors(ColorPack.tertiary),
+                            colors = CardDefaults.cardColors(if (isDarkMode) Color(0xFF5C6BC0) else Color(0xFFB39DDB) ),
                             onClick = {
-                                ToolVibrate().vibrate(this@WidgetManager)
+                                vibrate()
                                 state_showColorConfigMenu.value = true
                             },
-                        ){
-                            Row(
+                        ) {
+                            Row (
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxHeight().wrapContentWidth()
                             ) {
-                                Text(
+                                Text (
                                     text = if (flag_colorConfig.intValue == 1) "简洁" else if (flag_colorConfig.intValue == 2) "Material Design 取色" else if (flag_colorConfig.intValue == 3) "自定义颜色" else "Error",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Normal,
                                     color = ColorPack.secondary,
                                     modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
                                 )
-                                Icon(
+                                Icon (
                                     Icons.Filled.Add,
                                     contentDescription = "选择颜色配置",
                                     modifier = Modifier.height(15.dp).background(Color.Transparent).padding(end = 8.dp),
                                     tint = ColorPack.secondary,
                                 )
                                 if (state_showColorConfigMenu.value) {
-                                    DropdownMenu(
+                                    ComposeElementBundle.MENU_Dropdown_c_v1 (
                                         expanded = state_showColorConfigMenu.value,
                                         onDismissRequest = {
                                             state_showColorConfigMenu.value = false
                                         },
-                                        shape = RoundedCornerShape(5.dp),
-                                        containerColor = Color.Transparent,
-                                        modifier = Modifier.background(ColorPack.onBackground)
                                     ) {
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 1)
-                                                updateLocalPrefRemember_flag_colorConfig()
-                                                //关闭菜单
-                                                state_showColorConfigMenu.value = false
-                                            }
-                                        ) {
-                                            Text(
-                                                text = "简洁",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Normal,
-                                                color = ColorPack.secondary,
-                                                modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
-                                            )
-                                        }
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 2)
-                                                updateLocalPrefRemember_flag_colorConfig()
-                                                //关闭菜单
-                                                state_showColorConfigMenu.value = false
-                                            }
-                                        ) {
-                                            Text(
-                                                text = "Material Design 取色",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Normal,
-                                                color = ColorPack.secondary,
-                                                modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
-                                            )
-                                        }
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                SettingsRequestCenter.set_PREFS_Color_Config(this@WidgetManager, 3)
-                                                updateLocalPrefRemember_flag_colorConfig()
-                                                //关闭菜单
-                                                state_showColorConfigMenu.value = false
-                                            }
-                                        ) {
-                                            Text(
-                                                text = "自定义颜色",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Normal,
-                                                color = ColorPack.secondary,
-                                                modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
-                                            )
-                                        }
+                                        card_menu_mode_content()
                                     }
                                 }
                             }
@@ -506,16 +505,19 @@ class WidgetManager : AppCompatActivity() {
                     }
                 }
                 //分隔线
-                Divider(modifier = Modifier.height(0.5.dp).background(ColorPack.onBackground))
+                HorizontalDivider (
+                    thickness = 1.dp,
+                    color = if (isDarkMode) Color(0x99212121) else Color(0xFFFAFAFA)
+                )
                 //显示不同面板
                 when (flag_colorConfig.intValue) {
                     1 -> {
                         //简洁模式面板
-                        Column(
+                        Column (
                             modifier = Modifier.fillMaxWidth().wrapContentHeight()
                         ) {
                             //整行 - 选择深浅色
-                            Row(
+                            Row (
                                 modifier = Modifier.fillMaxWidth().height(50.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -525,7 +527,7 @@ class WidgetManager : AppCompatActivity() {
                                     modifier = Modifier.wrapContentHeight().padding(start = 10.dp),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Text(
+                                    Text (
                                         text = "当前字体颜色",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
@@ -533,7 +535,7 @@ class WidgetManager : AppCompatActivity() {
                                         modifier = Modifier.padding(start = 0.dp)
                                     )
                                     Spacer(modifier = Modifier.padding(top = 5.dp))
-                                    Text(
+                                    Text (
                                         text = "在简洁模式下，仅有深色和浅色两种可选",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Normal,
@@ -541,84 +543,48 @@ class WidgetManager : AppCompatActivity() {
                                     )
                                 }
                                 //选择深浅色菜单按钮
-                                Row(
+                                Row (
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.fillMaxHeight().wrapContentWidth()
                                 ) {
-                                    Card(
+                                    Card (
                                         modifier = Modifier
                                             .wrapContentWidth()
                                             .fillMaxHeight()
                                             .padding(horizontal = 10.dp, vertical = 8.dp),
                                         elevation = CardDefaults.cardElevation(5.dp),
                                         shape = RoundedCornerShape(20.dp),
-                                        //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
-                                        colors = CardDefaults.cardColors(ColorPack.tertiary),
+                                        colors = CardDefaults.cardColors(if (isDarkMode) Color(0xFF5C6BC0) else Color(0xFFB39DDB) ),
                                         onClick = {
                                             ToolVibrate().vibrate(this@WidgetManager)
                                             state_showColorConFigType_1_ModeMenu.value = true
                                         },
-                                    ){
-                                        Row(
+                                    ) {
+                                        Row (
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.fillMaxHeight().wrapContentWidth()
                                         ) {
-                                            Text(
+                                            Text (
                                                 text = if (flag_colorConFig_Type_1_Mode.intValue == 1) "深色" else if (flag_colorConFig_Type_1_Mode.intValue == 2) "浅色" else "Error",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Normal,
                                                 color = ColorPack.secondary,
                                                 modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
                                             )
-                                            Icon(
+                                            Icon (
                                                 Icons.Filled.DarkMode,
                                                 contentDescription = "选择颜色",
                                                 modifier = Modifier.height(15.dp).background(Color.Transparent).padding(end = 8.dp),
                                                 tint = ColorPack.secondary,
                                             )
                                             if (state_showColorConFigType_1_ModeMenu.value) {
-                                                DropdownMenu(
+                                                ComposeElementBundle.MENU_Dropdown_c_v1 (
                                                     expanded = state_showColorConFigType_1_ModeMenu.value,
                                                     onDismissRequest = {
                                                         state_showColorConFigType_1_ModeMenu.value = false
                                                     },
-                                                    shape = RoundedCornerShape(5.dp),
-                                                    containerColor = Color.Transparent,
-                                                    modifier = Modifier.background(ColorPack.onBackground)
                                                 ) {
-                                                    DropdownMenuItem(
-                                                        onClick = {
-                                                            ConfigCenter.setBasicConfigColorMode(this@WidgetManager, ConfigCenter.color_mode_dark)
-                                                            flag_colorConFig_Type_1_Mode.intValue = 1
-                                                            //关闭菜单
-                                                            state_showColorConFigType_1_ModeMenu.value = false
-                                                        }
-                                                    ) {
-                                                        Text(
-                                                            text = "深色",
-                                                            fontSize = 10.sp,
-                                                            fontWeight = FontWeight.Normal,
-                                                            color = ColorPack.secondary,
-                                                            modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
-                                                        )
-                                                    }
-                                                    DropdownMenuItem(
-                                                        onClick = {
-                                                            ConfigCenter.setBasicConfigColorMode(this@WidgetManager, ConfigCenter.color_mode_light)
-                                                            flag_colorConFig_Type_1_Mode.intValue = 2
-                                                            //关闭菜单
-                                                            state_showColorConFigType_1_ModeMenu.value = false
-                                                        }
-                                                    ) {
-                                                        Text(
-                                                            text = "浅色",
-                                                            fontSize = 10.sp,
-                                                            fontWeight = FontWeight.Normal,
-                                                            color = ColorPack.secondary,
-                                                            modifier = Modifier.padding(start = 10.dp,end = 4.dp, top = 5.dp, bottom = 5.dp)
-                                                        )
-                                                    }
-
+                                                    card_menu_dark_or_light_content()
                                                 }
                                             }
                                         }
@@ -626,15 +592,15 @@ class WidgetManager : AppCompatActivity() {
                                 }
                             }
                             //第二行 - 柔和色模式
-                            Row(
+                            Row (
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(
+                                Column (
                                     modifier = Modifier.padding(start = 10.dp)
                                 ) {
-                                    Text(
+                                    Text (
                                         text = "柔和模式",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
@@ -642,7 +608,7 @@ class WidgetManager : AppCompatActivity() {
                                         modifier = Modifier.padding(start = 0.dp)
                                     )
                                     Spacer(modifier = Modifier.padding(top = 2.dp))
-                                    Text(
+                                    Text (
                                         text = "开启后，黑色将被替换为更柔和的灰色",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Normal,
@@ -650,10 +616,10 @@ class WidgetManager : AppCompatActivity() {
                                         modifier = Modifier.padding(start = 0.dp)
                                     )
                                 }
-                                Row(
+                                Row (
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Switch(
+                                    Switch (
                                         checked = flag_colorConFig_Type_1_Smooth.value,
                                         onCheckedChange = {
                                             ToolVibrate().vibrate(this@WidgetManager)
@@ -667,10 +633,9 @@ class WidgetManager : AppCompatActivity() {
                                         },
                                         modifier = Modifier.padding(end = 10.dp),
                                         colors = SwitchDefaults.colors(
-                                            //checkedThumbColor = ColorPack.secondary,
-                                            checkedTrackColor = ColorPack.tertiary,
-                                            )
+                                            checkedTrackColor = if (isDarkMode) Color(0xFF5C6BC0) else Color(0xFFB39DDB) ,
                                         )
+                                    )
                                 }
                             }
                         }
@@ -686,9 +651,15 @@ class WidgetManager : AppCompatActivity() {
                 }
             }
         }
+
+        //Entrance
+        ComposeElementBundle.CARD_WITH_CORNER_c_v1(
+            onClick = {  },
+            content = { card_content() }
+        )
     }
     @Composable
-    fun TextCustomAreaCard(){
+    fun TextCustomAreaCard() {
         //焦点管理器
         val focusRequester = remember { FocusRequester() }
         val focusManager = LocalFocusManager.current
@@ -701,28 +672,14 @@ class WidgetManager : AppCompatActivity() {
             customText = SettingsRequestCenter.get_PREFS_Color_Config_Custom_Text(this@WidgetManager)
         }
 
-        //
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                .uniformShadow()
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
-        ){
-            Column(
+
+        @Composable
+        fun card_content() {
+            Column (
                 modifier = Modifier.fillMaxWidth().wrapContentHeight()
-            ){
+            ) {
                 //标题
-                Row(
+                Row (
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -748,35 +705,35 @@ class WidgetManager : AppCompatActivity() {
                     }
                 }
                 //文本框
-                Row(
+                Row (
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.wrapContentHeight().fillMaxWidth()
                 ) {
-                    TextField(
+                    TextField (
                         value = customText,
                         onValueChange = { customText = it },
                         colors = TextFieldDefaults.colors(
                             //背景色
-                            focusedContainerColor = ColorPack.onBackground,         //获得焦点时的背景色
-                            unfocusedContainerColor = ColorPack.onBackground,    //失去焦点时的背景色
+                            focusedContainerColor = if (isDarkMode) Color(0x30311B92) else Color(0x30D1C4E9),         //获得焦点时的背景色
+                            unfocusedContainerColor = if (isDarkMode) Color(0xFF212121) else Color(0xFFEEEEEE),    //失去焦点时的背景色
                             //文字颜色
                             focusedTextColor = ColorPack.secondary,       //获得焦点时文字颜色
                             unfocusedTextColor = ColorPack.secondary,     //失去焦点时文字颜色
-                            //下方横线
-                            focusedIndicatorColor = ColorPack.tertiary,  //获得焦点时横线颜色
-                            unfocusedIndicatorColor = ColorPack.secondary, //失去焦点时横线颜色
+                            //下方横线颜色
+                            focusedIndicatorColor = if (isDarkMode) Color(0xFFFAFAFA) else Color(0xFF212121),  //获得焦点时横线颜色
+                            unfocusedIndicatorColor = Color.Transparent, //失去焦点时横线颜色
                             //光标
-                            cursorColor = ColorPack.tertiary,
+                            cursorColor = if (isDarkMode) Color(0xFFFAFAFA) else Color(0xFF212121),
                         ),
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = 10.dp, end = 0.dp, bottom = 5.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .focusRequester(focusRequester)
                             .onFocusChanged { focusState ->
                                 //仅在失去焦点时触发保存
                                 if (focusState.isFocused) {
-                                    consoleLog("TextField：焦点变更：focusState.isFocused")
                                     //
                                     state_textFieldFocused.value = true
                                 }
@@ -790,21 +747,17 @@ class WidgetManager : AppCompatActivity() {
                                 }
                             },
                     )
-                    Spacer(modifier = Modifier.padding(start = 10.dp))
-                    Card(
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .height(50.dp)
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    Spacer(modifier = Modifier.padding(start = 5.dp))
+                    Card (
+                        modifier = Modifier.wrapContentWidth().padding(start = 10.dp, end = 10.dp),
                         elevation = CardDefaults.cardElevation(5.dp),
                         shape = RoundedCornerShape(20.dp),
-                        //border = BorderStroke(width = 0.5.dp, color = Color.Gray.copy(alpha = 0.1f)),
-                        colors = CardDefaults.cardColors(ColorPack.tertiary),
+                        colors = CardDefaults.cardColors(if (isDarkMode) Color(0xFF5C6BC0) else Color(0xFFB39DDB)),
                         onClick = {
                             ToolVibrate().vibrate(this@WidgetManager)
                             focusManager.clearFocus() },
-                    ){
-                        Row(
+                    ) {
+                        Row (
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxHeight().wrapContentWidth()
                         ) {
@@ -823,12 +776,43 @@ class WidgetManager : AppCompatActivity() {
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.padding(start = 5.dp))
+                    Card (
+                        modifier = Modifier.wrapContentWidth().padding(start = 0.dp, end = 5.dp, top = 5.dp, bottom = 5.dp),
+                        elevation = CardDefaults.cardElevation(5.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(if (isDarkMode) Color(0xFF5C6BC0) else Color(0xFFB39DDB)),
+                        onClick = {
+                            vibrate()
+
+                            focusManager.clearFocus()
+                        },
+                    ) {
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxHeight().wrapContentWidth()
+                        ) {
+                            Text(
+                                text = "取消",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = ColorPack.secondary,
+                                modifier = Modifier.padding(start = 10.dp,end = 10.dp, top = 5.dp, bottom = 5.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
+
+        //Entrance
+        ComposeElementBundle.CARD_WITH_CORNER_c_v1 (
+            onClick = {  },
+            content = { card_content() }
+        )
     }
     @Composable
-    fun TextConfigCard(){
+    fun TextConfigCard() {
         //字体大小
         var textSize by remember { mutableIntStateOf(85) }
         var textSizeSecondary by remember { mutableIntStateOf(15) }
@@ -862,27 +846,11 @@ class WidgetManager : AppCompatActivity() {
             sliderPosition = selectedIndex.toFloat()
         }
 
-
-        //Compose
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(horizontal = 10.dp, vertical = 3.dp)
-                .uniformShadow()
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = Color.Gray.copy(alpha = 0.1f)
-            ),
-            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
-        ){
-            Column(
+        @Composable
+        fun card_content() {
+            Column (
                 modifier = Modifier.fillMaxWidth().wrapContentHeight()
-            ){
+            ) {
                 //主要字体大小
                 Row(
                     modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -1056,78 +1024,14 @@ class WidgetManager : AppCompatActivity() {
 
             }
         }
-    }
 
-    //自定义阴影
-    @Suppress("DEPRECATION")
-    fun Modifier.uniformShadow(
-        blurRadius: Float = 15f,
-        shadowColor: Color = Color.Black.copy(alpha = 0.1f)
-    ) = this.drawBehind {
-        drawIntoCanvas { canvas ->
-            val paint = Paint().apply {
-                color = shadowColor
-                asFrameworkPaint().maskFilter = android.graphics.BlurMaskFilter(
-                    blurRadius,
-                    android.graphics.BlurMaskFilter.Blur.NORMAL
-                )
-            }
 
-            canvas.drawRoundRect(
-                left = 0f,
-                top = 0f,
-                right = size.width,
-                bottom = size.height,
-                radiusX = 12.dp.toPx(),
-                radiusY = 12.dp.toPx(),
-                paint = paint
-            )
-        }
-    }
-    //composable颜色配置
-    private var isDarkMode: Boolean = false
-    private lateinit var ColorPack: ColorScheme
-    private val LightColorScheme = lightColorScheme(
-        //全局底色
-        surface = Color(0xFFFFFFFF),
-        //一级和二级文字
-        primary = Color(0xFF000000),
-        secondary = Color(0xFF313131),
-        //卡片底色
-        background = Color(0xFFFFFFFF),
-        onBackground = Color(0xFFF6F6F6),
-        //主题色
-        tertiary = Color(0xFFD1C4E9),
-
+        //Entrance
+        ComposeElementBundle.CARD_WITH_CORNER_c_v1(
+            onClick = {  },
+            content = { card_content() }
         )
-    private val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF000000),
-        //一级和二级文字
-        primary = Color(0xFFFFFFFF),
-        secondary = Color(0xFFF6F6F6),
-        //卡片底色
-        background = Color(0xFF121212),
-        onBackground = Color(0xFF212121),
-        //主题色
-        tertiary = Color(0xFF6048A0),
-
-
-        )
-
-
-
-
-    //统一日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", msg)
-        }
     }
-
-
-
-
 
 
 

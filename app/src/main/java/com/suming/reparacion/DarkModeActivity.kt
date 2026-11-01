@@ -100,11 +100,13 @@ class DarkModeActivity: AppCompatActivity() {
     private lateinit var ColorPack: ColorScheme
     //深色模式标记
     private var isDarkMode: Boolean = false
+    //是否为多窗口模式
+    private var isMultiWindowMode: Boolean = isInMultiWindowMode
     //振动
     private fun vibrate(){
         ToolVibrate().vibrate(context)
     }
-    //统一日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", msg)
@@ -117,9 +119,7 @@ class DarkModeActivity: AppCompatActivity() {
     @SuppressLint("MissingInflatedId", "InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //界面配置
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_dark_mode)
+
         //准备工作
         init()
 
@@ -145,6 +145,23 @@ class DarkModeActivity: AppCompatActivity() {
         registerMoreActions()
         //主要操作按钮
         registerMainActions()
+
+
+    }
+
+    //基本初始化
+    private fun init() {
+        //界面配置
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_dark_mode)
+
+        //共享视图初始化
+        ContentRoot = findViewById(R.id.ScrollContentRoot)
+        //监听内容区域nestedScrollView是否在顶部
+        setupScrollContentListener()
+
+        //初始化是否为多窗口模式
+        isMultiWindowMode = isInMultiWindowMode
 
 
     }
@@ -206,7 +223,7 @@ class DarkModeActivity: AppCompatActivity() {
                 statusBarHeight_Dp = statusBarHeight_Dp,
                 startContent = { ADVANCED_TOP_BAR_Start() },
                 endContent = { ADVANCED_TOP_BAR_End() },
-                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, ComposeElementBundle.ADVANCED_TOP_BAR_content_height_Dp) }
             )
 
         }
@@ -310,7 +327,7 @@ class DarkModeActivity: AppCompatActivity() {
     fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
         ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
             color = ComposeElementBundle.ColorPack.surface,
-            statusBarHeight_Dp = statusBarHeight_Dp,
+            statusBarHeight_Dp = if (isMultiWindowMode) 0.dp else statusBarHeight_Dp,
             content_Height_Dp = content_Height_Dp
         )
     }
@@ -424,14 +441,14 @@ class DarkModeActivity: AppCompatActivity() {
             val ButtonSelectDarkWp = findViewById<TextView>(R.id.buttonChangeDark)
             ButtonSelectDarkWp.setOnClickListener {
                 vibrate()
-                consoleLog("开始选择深色壁纸")
+
                 openGalleryToPick("dark")
             }
             //按钮：选择/更改浅色壁纸
             val ButtonSelectLightWp = findViewById<TextView>(R.id.buttonChangeLight)
             ButtonSelectLightWp.setOnClickListener {
                 vibrate()
-                consoleLog("开始选择浅色壁纸")
+
                 openGalleryToPick("light")
             }
 
@@ -510,26 +527,21 @@ class DarkModeActivity: AppCompatActivity() {
             var bitmap: Bitmap?
             //根据标志位加载壁纸
             if (darkSet){
-                consoleLog("viewWorkEntrance: 加载深色壁纸")
                 //
                 bitmap = loadImage("dark").second
                 //
                 withContext(Dispatchers.Main){
                     bitmap?.let { pushToImageView(it,"dark") }
                 }
-            }else{
-                consoleLog("viewWorkEntrance: 深色壁纸标记为未设置,跳过加载")
             }
             if (lightSet){
-                consoleLog("viewWorkEntrance: 加载浅色壁纸")
+
                 //
                 bitmap = loadImage("light").second
                 //
                 withContext(Dispatchers.Main){
                     bitmap?.let { pushToImageView(it,"light") }
                 }
-            }else{
-                consoleLog("viewWorkEntrance: 浅色壁纸标记为未设置,跳过加载")
             }
             //更新操作区指示文字
             val dark = if (darkSet) 1 else 0
@@ -676,13 +688,11 @@ class DarkModeActivity: AppCompatActivity() {
         }
         //缩放并裁剪为屏幕分辨率
         fun scaleAndCropBitmap(bitmapForScale: Bitmap, picWidth: Int, picHeight: Int, screenWidth: Int, screenHeight: Int): Bitmap {
-            consoleLog("DarkModeActivity: 开始把图片缩放并裁剪为手机屏幕分辨率")
             val heightRatio = screenHeight.toFloat() / picHeight.toFloat()
             val newWidth = (picWidth * heightRatio).toInt()
             val newHeight = (picHeight * heightRatio).toInt()
             var scaledBitmap: Bitmap? = bitmapForScale.scale(newWidth, newHeight)
             if( scaledBitmap == null ){
-                consoleLog("DarkModeActivity: 严重错误 scaledBitmap == null")
                 return bitmapForScale
             }
             val picWidth2 = scaledBitmap.width
@@ -732,7 +742,6 @@ class DarkModeActivity: AppCompatActivity() {
         val newHeight = originalHeight - 2 * y
         //确保裁剪后的高度有效
         if (newHeight <= 0) {
-            consoleLog("发生严重错误：期望高度超过了原图高度")
             return cropBitmap
         }
 
@@ -790,7 +799,6 @@ class DarkModeActivity: AppCompatActivity() {
         when(mode){
             //深色壁纸
             "dark" -> {
-                consoleLog("loadImage: 开始加载深色壁纸")
                 //直接取文件实例
                 val wallpaperFileWrapper = WallpaperFileWrapper()
                 val (file,fileClipped) = wallpaperFileWrapper.wrapFile(this,mode = mode)
@@ -803,7 +811,6 @@ class DarkModeActivity: AppCompatActivity() {
                 }
                 //
                 if(bitmap == null){
-                    consoleLog("loadImage: 加载深色壁纸失败")
                     return Pair(false,null)
                 }else{
                     return Pair(true,bitmap)
@@ -811,7 +818,6 @@ class DarkModeActivity: AppCompatActivity() {
             }
             //浅色壁纸
             "light" -> {
-                consoleLog("loadImage: 开始加载浅色壁纸")
                 //直接取文件实例
                 val wallpaperFileWrapper = WallpaperFileWrapper()
                 val (file,fileClipped) = wallpaperFileWrapper.wrapFile(this,mode = mode)
@@ -824,7 +830,6 @@ class DarkModeActivity: AppCompatActivity() {
                 }
                 //
                 if(bitmap == null){
-                    consoleLog("loadImage: 加载浅色壁纸失败")
                     return Pair(false,null)
                 }else{
                     return Pair(true,bitmap)
@@ -832,7 +837,6 @@ class DarkModeActivity: AppCompatActivity() {
             }
             //其他错误传参
             else -> {
-                consoleLog("loadImage: 收到无效的参数,期望参数为\"dark\"或\"light\"")
                 return Pair(false,null)
             }
         }
@@ -981,7 +985,6 @@ class DarkModeActivity: AppCompatActivity() {
     //重新裁剪微动版本
     private fun reClipCropImage(){
         lifecycleScope.launch(Dispatchers.IO) {
-            consoleLog("重新裁剪微动版本壁纸")
             //检查设置
             val enableSlightMove = SettingsRequestCenter.get_PREFS_SlightMove_Clip(this@DarkModeActivity)
             val slightMoveValue = SettingsRequestCenter.get_VALUE_SlightMove(this@DarkModeActivity)
@@ -1032,7 +1035,6 @@ class DarkModeActivity: AppCompatActivity() {
     //导出壁纸
     private fun exportWallpaper(){
         lifecycleScope.launch(Dispatchers.IO) {
-            consoleLog("导出壁纸")
             //读取深色壁纸和浅色壁纸
             val darkBitmap = loadImage("dark",false).second
             val darkBitmapClipped = loadImage("dark",true).second
@@ -1216,7 +1218,6 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //重置按钮
     private fun resetButtonInfo(){
-        consoleLog("resetButtonInfo")
         //切换文字
         ButtonSwitchDark?.text = getString(R.string.dark_mode_paper_apply_notice_dark)
         ButtonSwitchLight?.text = getString(R.string.dark_mode_paper_apply_notice_light)
@@ -1226,7 +1227,6 @@ class DarkModeActivity: AppCompatActivity() {
     }
     //设置按钮
     private fun setButtonInfo(target: String,text:String,highlight: Boolean = false){
-        consoleLog("setButtonInfo $target $text $highlight")
         //切换文字
         when(target){
             "dark" -> {
@@ -1264,14 +1264,7 @@ class DarkModeActivity: AppCompatActivity() {
 
 
 
-    //基本初始化
-    private fun init() {
-        //共享视图初始化
-        ContentRoot = findViewById(R.id.ScrollContentRoot)
-        //监听内容区域nestedScrollView是否在顶部
-        setupScrollContentListener()
 
-    }
     //显示短通知
     private fun notice(text: String) {
         showCustomToast(text)

@@ -30,12 +30,10 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -48,14 +46,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
@@ -77,22 +71,27 @@ class LocalAppManager: AppCompatActivity() {
     private lateinit var ColorPack: ColorScheme
     //深色模式标记
     private var isDarkMode: Boolean = false
+    //是否为多窗口模式
+    private var isMultiWindowMode: Boolean = isInMultiWindowMode
     //振动
     private fun vibrate(){
         ToolVibrate().vibrate(context)
     }
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
+
 
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //界面配置
-        enableEdgeToEdge()
-        @Suppress("DEPRECATION")
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        //手动设置状态栏字体颜色
-        setStatusBarFontColor()
+
+        init()
 
 
 
@@ -105,6 +104,19 @@ class LocalAppManager: AppCompatActivity() {
         setContent {
             ComposeRoot()
         }
+
+    }
+
+    private fun init() {
+        //界面配置
+        enableEdgeToEdge()
+        @Suppress("DEPRECATION")
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        //手动设置状态栏字体颜色
+        setStatusBarFontColor()
+
+        //初始化是否为多窗口模式
+        isMultiWindowMode = isInMultiWindowMode
 
     }
 
@@ -161,7 +173,7 @@ class LocalAppManager: AppCompatActivity() {
                 statusBarHeight_Dp = statusBarHeight_Dp,
                 startContent = { ADVANCED_TOP_BAR_Start() },
                 endContent = { ADVANCED_TOP_BAR_End() },
-                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, ComposeElementBundle.ADVANCED_TOP_BAR_content_height_Dp) }
             )
         }
     }
@@ -387,9 +399,9 @@ class LocalAppManager: AppCompatActivity() {
     }
     @Composable
     fun ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp: Dp, content_Height_Dp: Dp){
-        ComposeElementBundle.BRUSH_AREA_TOP_c_v2(
+        ComposeElementBundle.BRUSH_AREA_TOP_c_v2 (
             color = if (isDarkMode) Color(0xFF000000) else Color(0xFFFFFFFF),
-            statusBarHeight_Dp = statusBarHeight_Dp,
+            statusBarHeight_Dp = if (isMultiWindowMode) 0.dp else statusBarHeight_Dp,
             content_Height_Dp = content_Height_Dp
         )
     }
@@ -427,12 +439,6 @@ class LocalAppManager: AppCompatActivity() {
             window, window.decorView
         )
         insetsController.isAppearanceLightStatusBars = colorModeDetector(this)
-    }
-    //统一日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", msg)
-        }
     }
 
 

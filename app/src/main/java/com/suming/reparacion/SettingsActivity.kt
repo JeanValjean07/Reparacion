@@ -182,7 +182,6 @@ class SettingsActivity : AppCompatActivity() {
             ComposeElementBundle.ADVANCED_TOP_BAR_c_v2_dual(
                 onHeightMeasured = { height ->
                     topAll_Height_Px = height
-                    consoleLog("topAll_Height_Px: $height")
                     //更新内边距
                     if (height > 0){
                         updateNestTopPadding_Advanced(topAll_Height_Px)
@@ -192,7 +191,7 @@ class SettingsActivity : AppCompatActivity() {
                 statusBarHeight_Dp = statusBarHeight_Dp,
                 startContent = { ADVANCED_TOP_BAR_Start() },
                 endContent = {  },
-                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, topAll_Height_Dp - statusBarHeight_Dp) }
+                brushContent = { ADVANCED_TOP_BAR_Brush(statusBarHeight_Dp, ComposeElementBundle.ADVANCED_TOP_BAR_content_height_Dp) }
             )
 
         }
@@ -458,7 +457,6 @@ class SettingsActivity : AppCompatActivity() {
 
     //修改滚动区域顶部内边距
     private fun updateNestTopPadding(topPadding: Int){
-        consoleLog("updateNestTopPadding: 发起修改内边距：topPadding = $topPadding")
         ContentRoot.setPadding(0, topPadding, 0, 0)
         //强制刷新视图
 
